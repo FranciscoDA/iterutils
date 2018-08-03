@@ -98,10 +98,16 @@ private:
 	iterator _end(std::index_sequence<I...>) {
 		return iterator(std::end(std::get<I>(t))...);
 	}
+
+	// store references/copies of the iterables
+	// to make sure they stay valid during the lifetime
+	// of this object
 	std::tuple<Iterables...> t;
 };
 
-/* need universal reference */
+// need universal reference to determine whether to store
+// copies (in case arguments are rvalues) or references
+// (in case arguments are lvalues)
 template<typename ...Iterables>
 auto zipped_range(Iterables&&... iterables) {
 	return zipped_range_impl<Iterables...>(std::forward<Iterables>(iterables)...);
