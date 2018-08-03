@@ -32,13 +32,16 @@ public:
 		return *this;
 	}
 	bool operator!=(const concat_iterator& other) const {
-		if (_index == other._index)
+		if (_index == other._index) {
 			// both iterators are in the same subrange
-			if (_index < sizeof...(Iterators)+1)
-				_begins[_index] != other._begins[other._index];
+			if (_index < sizeof...(Iterators)+1) {
+				return _begins[_index] != other._begins[other._index];
+			}
 			// both iterators are past the last subrange. essentially, they are equal
-			else
+			else {
 				return false;
+			}
+		}
 		// the iterators are in different subranges. they are not equal
 		return true;
 	}
@@ -86,13 +89,13 @@ public:
 	}
 };
 
-template<typename Iterable, typename ...Iterables>
+template<typename ...Iterables>
 class concat_range {
 public:
-	using iterator = concat_iterator<typename Iterable::iterator, typename Iterables::iterator...>;
-	concat_range(Iterable& arg1, Iterables&... args)
-		: _begin(std::begin(arg1), std::begin(args)..., std::end(arg1), std::end(args)..., 0),
-		  _end(std::end(arg1), std::end(args)..., std::end(arg1), std::end(args)...,  sizeof...(Iterables)+1) {
+	using iterator = concat_iterator<typename Iterables::iterator...>;
+	concat_range(Iterables&... iterables)
+		: _begin(std::begin(iterables)..., std::end(iterables)..., 0),
+		  _end(std::end(iterables)..., std::end(iterables)..., sizeof...(Iterables)) {
 	}
 	iterator begin() { return _begin; }
 	iterator end() { return _end; }

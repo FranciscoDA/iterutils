@@ -1,4 +1,4 @@
-#ifndef _REF_RANGE_H
+#ifndef _REF_RANGE_H_
 #define _REF_RANGE_H_
 
 template<typename T, typename... Args>

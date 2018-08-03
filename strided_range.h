@@ -1,3 +1,5 @@
+#include <iostream>
+
 #ifndef _STRIDED_RANGE_H_
 #define _STRIDED_RANGE_H_
 

@@ -71,25 +71,41 @@ zipped_cend(const Iterable& arg1, const Iterables&... args) {
 	return iterator(std::cend(arg1), std::cend(args)...);
 }
 
-// Range implementation class. Should not be instantiated explicitly
-// Use the zipped_range() functions instead
-template<typename Container, typename ...Args>
-class zipped_range {
+template<typename ...Iterables>
+class zipped_range_impl {
 public:
-	using iterator = zipped_iterator<typename Container::iterator, typename Args::iterator...>;
+	using iterator = zipped_iterator<typename std::remove_reference_t<Iterables>::iterator...>;
 	using value_type = typename iterator::value_type;
-	using reference = typename iterator::reference;
 	using pointer = typename iterator::pointer;
-	zipped_range(Container& arg1, Args&... args) : _begin(zipped_begin(arg1, args...)), _end(zipped_end(arg1, args...)) {
+	using reference = typename iterator::reference;
+
+	zipped_range_impl (
+		std::conditional_t<std::is_lvalue_reference_v<Iterables>, Iterables&, Iterables&&>... iterables
+	) : t(std::forward<Iterables>(iterables)...) {
 	}
-	zipped_range(Container&& arg1, Args&&... args) : _begin(zipped_begin(arg1, args...)), _end(zipped_end(arg1, args...)) {
+	iterator begin() {
+		return _begin(std::index_sequence_for<Iterables...>());
 	}
-	iterator begin() { return _begin; }
-	iterator end() { return _end; }
+	iterator end() {
+		return _end(std::index_sequence_for<Iterables...>());
+	}
 private:
-	iterator _begin;
-	iterator _end;
+	template<std::size_t ...I>
+	iterator _begin(std::index_sequence<I...>) {
+		return iterator(std::begin(std::get<I>(t))...);
+	}
+	template<std::size_t ...I>
+	iterator _end(std::index_sequence<I...>) {
+		return iterator(std::end(std::get<I>(t))...);
+	}
+	std::tuple<Iterables...> t;
 };
+
+/* need universal reference */
+template<typename ...Iterables>
+auto zipped_range(Iterables&&... iterables) {
+	return zipped_range_impl<Iterables...>(std::forward<Iterables>(iterables)...);
+}
 
 #endif
 
