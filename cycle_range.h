@@ -24,7 +24,7 @@ public:
 	}
 	cycle_iterator operator++(int) {
 		cycle_iterator copy = *this;
-		++copy;
+		++(*this);
 		return copy;
 	}
 	bool operator!=(const cycle_iterator& other) const {
@@ -67,7 +67,7 @@ public:
 	}
 	cycle_iterator_n operator++(int) {
 		cycle_iterator_n copy = *this;
-		++copy;
+		++(*this);
 		return copy;
 	}
 	bool operator!=(const cycle_iterator_n& other) const {

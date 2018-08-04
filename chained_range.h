@@ -31,6 +31,11 @@ public:
 			++_index;
 		return *this;
 	}
+	chained_iterator operator++(int) {
+		chained_iterator copy = *this;
+		++(*this);
+		return copy;
+	}
 	bool operator!=(const chained_iterator& other) const {
 		if (_index == other._index) {
 			// both iterators are in the same subrange
@@ -79,6 +84,11 @@ public:
 		else
 			++it2;
 		return *this;
+	}
+	chained_iterator operator++(int) {
+		chained_iterator copy = *this;
+		++(*this);
+		return copy;
 	}
 	bool operator!=(const chained_iterator& other) const {
 		if (it1 != it1_end and other.it1 != other.it1_end)

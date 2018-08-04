@@ -18,6 +18,11 @@ public:
 
 	// these operators act as a proxy to the private methods
 	zipped_iterator& operator++() { return _prefix_inc(std::index_sequence_for<Iterators...>()); }
+	zipped_iterator operator++(int) {
+		zipped_iterator copy = *this;
+		++(*this);
+		return copy
+	}
 	reference operator*() const { return _deref(std::index_sequence_for<Iterators...>()); }
 	bool operator!=(const zipped_iterator& other) const { return _logical_neq(other, std::index_sequence_for<Iterators...>()); }
 
