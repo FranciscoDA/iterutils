@@ -69,5 +69,12 @@ int main() {
 	for(auto& x : chained_range(v1, v2, v3))
 		std::cout << x.i << ",";
 	std::cout << std::endl;
+
+	std::cout << "Test 7: Cycle iterator" << std::endl;
+	std::cout << "v1..v1..v1 = ";
+	for(auto& x : cycle_range(v1, 3)) {
+		std::cout << x.i << ",";
+	}
+	std::cout << std::endl;
 }
 
