@@ -1,8 +1,9 @@
 
 #include "../zipped_range.h"
 #include "../ref_range.h"
-#include "../concat_range.h"
+#include "../chained_range.h"
 #include "../strided_range.h"
+#include "../cycle_range.h"
 
 #include <iostream>
 #include <vector>
@@ -34,7 +35,7 @@ int main() {
 	std::cout << "Test 2: Concatenation of two ranges" << std::endl;
 	int sum = 0;
 	int count = 0;
-	for (auto& x : concat_range(v1,v2)) {
+	for (auto& x : chained_range(v1,v2)) {
 		sum += x.i;
 		count += 1;
 	}
@@ -65,7 +66,7 @@ int main() {
 
 	std::cout << "Test 6: Three range concatenation" << std::endl;
 	std::cout << "v1..v2..v3 = ";
-	for(auto& x : concat_range(v1, v2, v3))
+	for(auto& x : chained_range(v1, v2, v3))
 		std::cout << x.i << ",";
 	std::cout << std::endl;
 }
