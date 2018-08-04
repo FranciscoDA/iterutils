@@ -1,5 +1,5 @@
-#ifndef _CYCLE_RANGE_H_
-#define _CYCLE_RANGE_H_
+#ifndef _ITERUTILS_CYCLE_RANGE_H_
+#define _ITERUTILS_CYCLE_RANGE_H_
 
 #include <iterator>
 
