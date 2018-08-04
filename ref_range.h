@@ -1,5 +1,5 @@
-#ifndef _REF_RANGE_H_
-#define _REF_RANGE_H_
+#ifndef _ITERUTILS_REF_RANGE_H_
+#define _ITERUTILS_REF_RANGE_H_
 
 template<typename T, typename... Args>
 class ref_range {

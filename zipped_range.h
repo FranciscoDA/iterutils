@@ -1,5 +1,5 @@
-#ifndef _ZIPPED_RANGE_H_
-#define _ZIPPED_RANGE_H_
+#ifndef _ITERUTILS_ZIPPED_RANGE_H_
+#define _ITERUTILS_ZIPPED_RANGE_H_
 
 #include <tuple>
 
@@ -80,7 +80,7 @@ public:
 	using reference = typename iterator::reference;
 
 	zipped_range_impl (
-		std::conditional_t<std::is_lvalue_reference_v<Iterables>, Iterables&, Iterables&&>... iterables
+		std::conditional_t<std::is_lvalue_reference_v<Iterables>, Iterables, Iterables&&>... iterables
 	) : t(std::forward<Iterables>(iterables)...) {
 	}
 	iterator begin() {

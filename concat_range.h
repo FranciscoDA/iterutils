@@ -1,5 +1,5 @@
-#ifndef _CONCAT_RANGE_H_
-#define _CONCAT_RANGE_H_
+#ifndef _ITERUTILS_CONCAT_RANGE_H_
+#define _ITERUTILS_CONCAT_RANGE_H_
 
 #include <array>
 #include <variant>
@@ -97,7 +97,7 @@ public:
 	using reference = typename iterator::reference;
 	using pointer = typename iterator::pointer;
 	concat_range_impl (
-		std::conditional_t<std::is_lvalue_reference_v<Iterables>, Iterables&, Iterables&&>... iterables
+		std::conditional_t<std::is_lvalue_reference_v<Iterables>, Iterables, Iterables&&>... iterables
 	) : t(iterables...) {
 	}
 	iterator begin() { return _begin(std::index_sequence_for<Iterables...>()); }
@@ -123,8 +123,8 @@ public:
 	using pointer = typename iterator::pointer;
 
 	concat_range_impl(
-		std::conditional_t<std::is_lvalue_reference_v<Iterable1>, Iterable1&, Iterable1&&> iterable1,
-		std::conditional_t<std::is_lvalue_reference_v<Iterable2>, Iterable2&, Iterable2&&> iterable2
+		std::conditional_t<std::is_lvalue_reference_v<Iterable1>, Iterable1, Iterable1&&> iterable1,
+		std::conditional_t<std::is_lvalue_reference_v<Iterable2>, Iterable2, Iterable2&&> iterable2
 	) : iter1(std::forward<Iterable1>(iterable1)), iter2(std::forward<Iterable2>(iterable2)) {
 	}
 	iterator begin() { return iterator(std::begin(iter1), std::end(iter1), std::begin(iter2)); }

@@ -1,7 +1,7 @@
-#include <iostream>
+#ifndef _ITERUTILS_STRIDED_RANGE_H_
+#define _ITERUTILS_STRIDED_RANGE_H_
 
-#ifndef _STRIDED_RANGE_H_
-#define _STRIDED_RANGE_H_
+#include <type_traits>
 
 template<typename Iterator>
 class strided_iterator : public Iterator {
@@ -73,25 +73,31 @@ strided_iterator<typename Iterable::const_iterator> strided_cend(const Iterable&
 }
 
 template<typename Iterable>
-class strided_range {
+class strided_range_impl {
 public:
-	using value_type = typename Iterable::value_type;
-	using pointer = typename Iterable::pointer;
-	using reference = typename Iterable::reference;
-	using difference_type = typename Iterable::difference_type;
-	using iterator = strided_iterator<typename Iterable::iterator>;
-	using size_type = typename Iterable::size_type;
+	using value_type = typename std::remove_reference_t<Iterable>::value_type;
+	using pointer = typename std::remove_reference_t<Iterable>::pointer;
+	using reference = typename std::remove_reference_t<Iterable>::reference;
+	using difference_type = typename std::remove_reference_t<Iterable>::difference_type;
+	using iterator = strided_iterator<typename std::remove_reference_t<Iterable>::iterator>;
+	using size_type = typename std::remove_reference_t<Iterable>::size_type;
 
-	strided_range(Iterable& i, size_type offset, size_type stride)
-		: _begin(strided_begin(i, offset, stride)), _end(strided_end(i, offset, stride)) {
+	strided_range_impl (
+		std::conditional_t<std::is_lvalue_reference_v<Iterable>, Iterable, Iterable&&> iter,
+		size_type offset, size_type stride
+	) : _iter(iter), _offset(offset), _stride(stride) {
 	}
-	iterator begin() { return _begin; }
-	iterator end() { return _end; }
+	iterator begin() { return strided_begin(_iter, _offset, _stride); }
+	iterator end() { return strided_end(_iter, _offset, _stride); }
 private:
-	iterator _begin;
-	iterator _end;
-
+	Iterable _iter;
+	size_type _offset;
+	size_type _stride;
 };
+template<typename Iterable>
+auto strided_range(Iterable&& i, typename std::remove_reference_t<Iterable>::size_type offset, typename std::remove_reference_t<Iterable>::size_type stride) {
+	return strided_range_impl<Iterable>(std::forward<Iterable>(i), offset, stride);
+}
 
 #endif
 
