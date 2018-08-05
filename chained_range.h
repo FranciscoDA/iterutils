@@ -4,6 +4,9 @@
 #include <array>
 #include <variant>
 #include <tuple>
+#include "detail.h"
+
+namespace iterutils {
 
 template<typename ...Iterators>
 class chained_iterator {
@@ -106,12 +109,12 @@ public:
 	using value_type = typename iterator::value_type;
 	using reference = typename iterator::reference;
 	using pointer = typename iterator::pointer;
-	chained_range_impl (
-		std::conditional_t<std::is_lvalue_reference_v<Iterables>, Iterables, Iterables&&>... iterables
-	) : t(iterables...) {
+	chained_range_impl (detail::arg_from_uref_t<Iterables>... iterables)
+		: t(std::forward<Iterables>(iterables)...) {
 	}
 	iterator begin() { return _begin(std::index_sequence_for<Iterables...>()); }
 	iterator end() { return _end(std::index_sequence_for<Iterables...>()); }
+	std::size_t size() const { return _size(std::index_sequence_for<Iterables...>()); }
 private:
 	template<std::size_t ...I>
 	iterator _begin(std::index_sequence<I...>) {
@@ -121,6 +124,8 @@ private:
 	iterator _end(std::index_sequence<I...>) {
 		return iterator(std::end(std::get<I>(t))..., std::end(std::get<I>(t))..., sizeof...(Iterables));
 	}
+	template<std::size_t ...I>
+	std::size_t _size(std::index_sequence<I...>) const { return (std::get<I>(t) + ...); }
 	std::tuple<Iterables...> t;
 };
 
@@ -132,13 +137,12 @@ public:
 	using reference = typename iterator::reference;
 	using pointer = typename iterator::pointer;
 
-	chained_range_impl(
-		std::conditional_t<std::is_lvalue_reference_v<Iterable1>, Iterable1, Iterable1&&> iterable1,
-		std::conditional_t<std::is_lvalue_reference_v<Iterable2>, Iterable2, Iterable2&&> iterable2
-	) : iter1(std::forward<Iterable1>(iterable1)), iter2(std::forward<Iterable2>(iterable2)) {
+	chained_range_impl(detail::arg_from_uref_t<Iterable1> iterable1, detail::arg_from_uref_t<Iterable2> iterable2)
+		: iter1(std::forward<Iterable1>(iterable1)), iter2(std::forward<Iterable2>(iterable2)) {
 	}
 	iterator begin() { return iterator(std::begin(iter1), std::end(iter1), std::begin(iter2)); }
 	iterator end() { return iterator(std::end(iter1), std::end(iter1), std::end(iter2)); }
+	std::size_t size() const { return iter1.size() + iter2.size(); }
 private:
 	Iterable1 iter1;
 	Iterable2 iter2;
@@ -150,6 +154,8 @@ private:
 template<typename ...Iterables>
 auto chained_range(Iterables&&... iterables) {
 	return chained_range_impl<Iterables...>(std::forward<Iterables>(iterables)...);
+}
+
 }
 
 #endif

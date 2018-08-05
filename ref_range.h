@@ -23,8 +23,13 @@ public:
 	private:
 		T** base;
 	};
-	auto begin() { return iterator(refs.begin()); }
-	auto end() { return iterator(refs.end()); }
+	using value_type = typename iterator::value_type;
+	using difference_type = typename iterator::difference_type;
+	using reference = typename iterator::reference;
+	using pointer = typename iterator::pointer;
+	iterator begin() { return iterator(refs.begin()); }
+	iterator end() { return iterator(refs.end()); }
+	std::size_t size() const { return sizeof...(Args)+1; }
 };
 
 #endif

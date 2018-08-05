@@ -2,6 +2,9 @@
 #define _ITERUTILS_ZIPPED_RANGE_H_
 
 #include <tuple>
+#include "detail.h"
+
+namespace iterutils {
 
 template<typename ...Iterators>
 class zipped_iterator {
@@ -81,26 +84,24 @@ public:
 	using pointer = typename iterator::pointer;
 	using reference = typename iterator::reference;
 
-	zipped_range_impl (
-		std::conditional_t<std::is_lvalue_reference_v<Iterables>, Iterables, Iterables&&>... iterables
-	) : t(std::forward<Iterables>(iterables)...) {
+	zipped_range_impl (detail::arg_from_uref_t<Iterables>... iterables)
+		: t(std::forward<Iterables>(iterables)...) {
 	}
-	iterator begin() {
-		return _begin(std::index_sequence_for<Iterables...>());
-	}
-	iterator end() {
-		return _end(std::index_sequence_for<Iterables...>());
-	}
+	iterator begin() { return _begin(std::index_sequence_for<Iterables...>()); }
+	iterator end() { return _end(std::index_sequence_for<Iterables...>()); }
+	std::size_t size() const { return _size<0>(); }
 private:
 	template<std::size_t ...I>
-	iterator _begin(std::index_sequence<I...>) {
-		return iterator(std::begin(std::get<I>(t))...);
-	}
+	iterator _begin(std::index_sequence<I...>) { return iterator(std::begin(std::get<I>(t))...); }
 	template<std::size_t ...I>
-	iterator _end(std::index_sequence<I...>) {
-		return iterator(std::end(std::get<I>(t))...);
+	iterator _end(std::index_sequence<I...>) { return iterator(std::end(std::get<I>(t))...); }
+	template<std::size_t I>
+	std::size_t _size() const {
+		if constexpr (I < sizeof...(Iterables)-1) {
+			return std::min(std::get<I>(t).size(), _size<I+1>());
+		}
+		return std::get<I>(t).size();
 	}
-
 	// store references/copies of the iterables
 	// to make sure they stay valid during the lifetime
 	// of this object
@@ -113,6 +114,8 @@ private:
 template<typename ...Iterables>
 auto zipped_range(Iterables&&... iterables) {
 	return zipped_range_impl<Iterables...>(std::forward<Iterables>(iterables)...);
+}
+
 }
 
 #endif

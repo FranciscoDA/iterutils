@@ -3,6 +3,8 @@
 
 #include <type_traits>
 
+namespace iterutils {
+
 template<typename Iterator>
 class strided_iterator : public Iterator {
 public:
@@ -75,20 +77,21 @@ auto strided_cend(const Iterable& x, typename Iterable::size_type offset, typena
 template<typename Iterable>
 class strided_range_impl {
 public:
-	using value_type = typename std::remove_reference_t<Iterable>::value_type;
-	using pointer = typename std::remove_reference_t<Iterable>::pointer;
-	using reference = typename std::remove_reference_t<Iterable>::reference;
-	using difference_type = typename std::remove_reference_t<Iterable>::difference_type;
 	using iterator = strided_iterator<typename std::remove_reference_t<Iterable>::iterator>;
+	using value_type = typename iterator::value_type;
+	using pointer = typename iterator::pointer;
+	using reference = typename iterator::reference;
+	using difference_type = typename iterator::difference_type;
 	using size_type = typename std::remove_reference_t<Iterable>::size_type;
 
 	strided_range_impl (
-		std::conditional_t<std::is_lvalue_reference_v<Iterable>, Iterable, Iterable&&> iter,
+		detail::arg_from_uref_t<Iterable> iter,
 		size_type offset, size_type stride
 	) : _iter(iter), _offset(offset), _stride(stride) {
 	}
 	iterator begin() { return strided_begin(_iter, _offset, _stride); }
 	iterator end() { return strided_end(_iter, _offset, _stride); }
+	std::size_t size() const { return (_iter.size()-_offset) / _stride; }
 private:
 	Iterable _iter;
 	size_type _offset;
@@ -97,6 +100,8 @@ private:
 template<typename Iterable>
 auto strided_range(Iterable&& i, typename std::remove_reference_t<Iterable>::size_type offset, typename std::remove_reference_t<Iterable>::size_type stride) {
 	return strided_range_impl<Iterable>(std::forward<Iterable>(i), offset, stride);
+}
+
 }
 
 #endif

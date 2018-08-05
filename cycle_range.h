@@ -2,6 +2,7 @@
 #define _ITERUTILS_CYCLE_RANGE_H_
 
 #include <iterator>
+#include <limits>
 
 #include "detail.h"
 
@@ -95,12 +96,9 @@ public:
 	cycle_range_n_impl(detail::arg_from_uref_t<Iterable> iterable, std::size_t maxcycles)
 		: _iterable(iterable), _maxcycles(maxcycles) {
 	}
-	iterator begin() {
-		return iterator(std::begin(_iterable), std::end(_iterable), _maxcycles);
-	}
-	iterator end() {
-		return iterator(std::end(_iterable), std::end(_iterable), 0);
-	}
+	iterator begin() { return iterator(std::begin(_iterable), std::end(_iterable), _maxcycles); }
+	iterator end() { return iterator(std::end(_iterable), std::end(_iterable), 0); }
+	std::size_t size() const { return _iterable.size()*_maxcycles; }
 private:
 	Iterable _iterable;
 	std::size_t _maxcycles;
@@ -117,12 +115,9 @@ public:
 	cycle_range_impl(detail::arg_from_uref_t<Iterable> iterable)
 		: _iterable(iterable) {
 	}
-	iterator begin() {
-		return iterator(std::begin(_iterable), std::end(_iterable));
-	}
-	iterator end() {
-		return iterator(std::end(_iterable), std::end(_iterable));
-	}
+	iterator begin() { return iterator(std::begin(_iterable), std::end(_iterable)); }
+	iterator end() { return iterator(std::end(_iterable), std::end(_iterable)); }
+	std::size_t size() const { return std::numeric_limits<std::size_t>::max(); }
 private:
 	Iterable _iterable;
 };
