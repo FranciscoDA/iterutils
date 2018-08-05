@@ -3,6 +3,10 @@
 
 #include <iterator>
 
+#include "detail.h"
+
+namespace iterutils {
+
 template<typename Iterator>
 class cycle_iterator {
 public:
@@ -88,10 +92,8 @@ public:
 	using pointer = typename iterator::pointer;
 	using reference = typename iterator::reference;
 	
-	cycle_range_n_impl(
-		std::conditional_t<std::is_lvalue_reference_v<Iterable>, Iterable, Iterable&&> iterable,
-		std::size_t maxcycles
-	) : _iterable(iterable), _maxcycles(maxcycles) {
+	cycle_range_n_impl(detail::arg_from_uref_t<Iterable> iterable, std::size_t maxcycles)
+		: _iterable(iterable), _maxcycles(maxcycles) {
 	}
 	iterator begin() {
 		return iterator(std::begin(_iterable), std::end(_iterable), _maxcycles);
@@ -112,9 +114,8 @@ public:
 	using pointer = typename iterator::pointer;
 	using reference = typename iterator::reference;
 	
-	cycle_range_impl(
-		std::conditional_t<std::is_lvalue_reference_v<Iterable>, Iterable, Iterable&&> iterable
-	) : _iterable(iterable) {
+	cycle_range_impl(detail::arg_from_uref_t<Iterable> iterable)
+		: _iterable(iterable) {
 	}
 	iterator begin() {
 		return iterator(std::begin(_iterable), std::end(_iterable));
@@ -134,6 +135,8 @@ auto cycle_range(Iterable&& iterable) {
 template<typename Iterable>
 auto cycle_range(Iterable&& iterable, std::size_t maxcycles) {
 	return cycle_range_n_impl<Iterable>(std::forward<Iterable>(iterable), maxcycles);
+}
+
 }
 
 #endif

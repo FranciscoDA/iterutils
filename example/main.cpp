@@ -8,6 +8,8 @@
 #include <iostream>
 #include <vector>
 
+using namespace iterutils;
+
 struct HeavyObject {
 	int i;
 	HeavyObject(const HeavyObject& other) { throw std::exception(); }

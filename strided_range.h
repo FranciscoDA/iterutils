@@ -53,22 +53,22 @@ private:
 };
 
 template<typename Iterable>
-strided_iterator<typename Iterable::iterator> strided_begin(Iterable& x, typename Iterable::size_type offset, typename Iterable::size_type stride) {
+auto strided_begin(Iterable& x, typename Iterable::size_type offset, typename Iterable::size_type stride) {
 	return strided_iterator<typename Iterable::iterator>(x.begin() + offset, stride);
 }
 template<typename Iterable>
-strided_iterator<typename Iterable::const_iterator> strided_cbegin(const Iterable& x, typename Iterable::size_type offset, typename Iterable::size_type stride) {
+auto strided_cbegin(const Iterable& x, typename Iterable::size_type offset, typename Iterable::size_type stride) {
 	return strided_iterator<typename Iterable::const_iterator>(x.cbegin() + offset, stride);
 }
 // strided_(c)end iterators need to calculate an offset from the true end of
 // the iterable. This should be the first past-the-end position that the
 // corresponding strided_(c)begin iterator will find through successive increments
 template<typename Iterable>
-strided_iterator<typename Iterable::iterator> strided_end(Iterable& x, typename Iterable::size_type offset, typename Iterable::size_type stride) {
+auto strided_end(Iterable& x, typename Iterable::size_type offset, typename Iterable::size_type stride) {
 	return strided_begin(x, offset, stride) += (x.size() - offset + stride - 1)/stride;
 }
 template<typename Iterable>
-strided_iterator<typename Iterable::const_iterator> strided_cend(const Iterable& x, typename Iterable::size_type offset, typename Iterable::size_type stride) {
+auto strided_cend(const Iterable& x, typename Iterable::size_type offset, typename Iterable::size_type stride) {
 	return strided_cbegin(x, offset, stride) += (x.size() - offset + stride - 1)/stride;
 }
 
