@@ -50,7 +50,7 @@ auto alternated_end(Iterables&... iterables) {
 }
 
 template<typename ...Iterables>
-class alternated_range {
+class alternated_range_impl {
 public:
 	using iterator = alternated_iterator<typename std::remove_reference_t<Iterables>::iterator...>;
 	using value_type = iterator::value_type;
@@ -73,10 +73,20 @@ private:
 	}
 	template<std::size_t I>
 	std::size_t _element_size() const {
+		// the size of a cycle_range_impl would overflow due to multiplication or addition
+		// add a special case to handle cycle_range_impls
+		if constexpr(std::is_same_v<std::remove_reference_t<std::tuple_element_t<I, decltype(t)>>, cycle_range_impl>) {
+			return std::numeric_limits<std::size_t>::max();
+		}
 		return std::get<I>(t).size() * sizeof...(Iterables) + I;
 	}
 	std::tuple<Iterables...> t;
 };
+
+template<typename ...Iterables>
+auto alternated_range(Iterables&&... iterables) {
+	return alternated_range_impl<Iterables...>(std::forward<Iterables>(iterables)...);
+}
 
 #endif
 
