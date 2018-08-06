@@ -6,6 +6,8 @@
 
 #include "detail.h"
 
+namespace iterutils {
+
 template<typename ...Iterators>
 class alternated_iterator {
 public:
@@ -87,6 +89,8 @@ template<typename ...Iterables>
 auto alternated_range(Iterables&&... iterables) {
 	return alternated_range_impl<Iterables...>(std::forward<Iterables>(iterables)...);
 }
+
+} // namespace iterutils
 
 #endif
 

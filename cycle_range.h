@@ -132,6 +132,6 @@ auto cycle_range(Iterable&& iterable, std::size_t maxcycles) {
 	return cycle_range_n_impl<Iterable>(std::forward<Iterable>(iterable), maxcycles);
 }
 
-}
+} // namespace iterutils
 
 #endif

@@ -1,6 +1,8 @@
 #ifndef _ITERUTILS_REF_RANGE_H_
 #define _ITERUTILS_REF_RANGE_H_
 
+namespace iterutils {
+
 template<typename T, typename... Args>
 class ref_range {
 private:
@@ -31,6 +33,8 @@ public:
 	iterator end() { return iterator(refs.end()); }
 	std::size_t size() const { return sizeof...(Args)+1; }
 };
+
+} // namespace iterutils
 
 #endif
 

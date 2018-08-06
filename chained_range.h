@@ -130,12 +130,8 @@ public:
 	chained_range_impl (detail::arg_from_uref_t<Iterables>... iterables)
 		: t(std::forward<Iterables>(iterables)...) {
 	}
-	iterator begin() {
-		return std::apply(chained_begin<std::remove_reference_t<Iterables>...>, t);
-	}
-	iterator end() {
-		return std::apply(chained_end<std::remove_reference_t<Iterables>...>, t);
-	}
+	iterator begin() { return std::apply(chained_begin<std::remove_reference_t<Iterables>...>, t); }
+	iterator end() { return std::apply(chained_end<std::remove_reference_t<Iterables>...>, t); }
 	std::size_t size() const { return _size(std::index_sequence_for<Iterables...>()); }
 private:
 	template<std::size_t ...I>
@@ -170,6 +166,6 @@ auto chained_range(Iterables&&... iterables) {
 	return chained_range_impl<Iterables...>(std::forward<Iterables>(iterables)...);
 }
 
-}
+} // namespace iterutils
 
 #endif

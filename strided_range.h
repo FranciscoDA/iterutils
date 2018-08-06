@@ -102,7 +102,7 @@ auto strided_range(Iterable&& i, typename std::remove_reference_t<Iterable>::siz
 	return strided_range_impl<Iterable>(std::forward<Iterable>(i), offset, stride);
 }
 
-}
+} // namespace iterutils
 
 #endif
 

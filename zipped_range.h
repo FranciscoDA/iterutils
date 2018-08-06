@@ -112,7 +112,7 @@ auto zipped_range(Iterables&&... iterables) {
 	return zipped_range_impl<Iterables...>(std::forward<Iterables>(iterables)...);
 }
 
-}
+} // namespace iterutils
 
 #endif
 
