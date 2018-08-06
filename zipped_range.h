@@ -87,14 +87,10 @@ public:
 	zipped_range_impl (detail::arg_from_uref_t<Iterables>... iterables)
 		: t(std::forward<Iterables>(iterables)...) {
 	}
-	iterator begin() { return _begin(std::index_sequence_for<Iterables...>()); }
-	iterator end() { return _end(std::index_sequence_for<Iterables...>()); }
+	iterator begin() { return std::apply(zipped_begin<std::remove_reference_t<Iterables>...>, t); }
+	iterator end() { return std::apply(zipped_end<std::remove_reference_t<Iterables>...>, t); }
 	std::size_t size() const { return _size<0>(); }
 private:
-	template<std::size_t ...I>
-	iterator _begin(std::index_sequence<I...>) { return iterator(std::begin(std::get<I>(t))...); }
-	template<std::size_t ...I>
-	iterator _end(std::index_sequence<I...>) { return iterator(std::end(std::get<I>(t))...); }
 	template<std::size_t I>
 	std::size_t _size() const {
 		if constexpr (I < sizeof...(Iterables)-1) {

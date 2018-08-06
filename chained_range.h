@@ -103,6 +103,24 @@ public:
 };
 
 template<typename ...Iterables>
+auto chained_begin(Iterables&... iterables) {
+	return chained_iterator<typename Iterables::iterator...>(std::begin(iterables)..., std::end(iterables)..., 0);
+}
+template<typename ...Iterables>
+auto chained_end(Iterables&... iterables) {
+	return chained_iterator<typename Iterables::iterator...>(std::end(iterables)..., std::end(iterables)..., sizeof...(Iterables));
+}
+
+template<typename Iterable1, typename Iterable2>
+auto chained_begin(Iterable1& iter1, Iterable2& iter2) {
+	return chained_iterator<typename Iterable1::iterator, typename Iterable2::iterator>(std::begin(iter1), std::end(iter1), std::begin(iter2));
+}
+template<typename Iterable1, typename Iterable2>
+auto chained_end(Iterable1& iter1, Iterable2& iter2) {
+	return chained_iterator<typename Iterable1::iterator, typename Iterable2::iterator>(std::end(iter1), std::end(iter1), std::end(iter2));
+}
+
+template<typename ...Iterables>
 class chained_range_impl {
 public:
 	using iterator = chained_iterator<typename std::remove_reference_t<Iterables>::iterator...>;
@@ -112,18 +130,14 @@ public:
 	chained_range_impl (detail::arg_from_uref_t<Iterables>... iterables)
 		: t(std::forward<Iterables>(iterables)...) {
 	}
-	iterator begin() { return _begin(std::index_sequence_for<Iterables...>()); }
-	iterator end() { return _end(std::index_sequence_for<Iterables...>()); }
+	iterator begin() {
+		return std::apply(chained_begin<std::remove_reference_t<Iterables>...>, t);
+	}
+	iterator end() {
+		return std::apply(chained_end<std::remove_reference_t<Iterables>...>, t);
+	}
 	std::size_t size() const { return _size(std::index_sequence_for<Iterables...>()); }
 private:
-	template<std::size_t ...I>
-	iterator _begin(std::index_sequence<I...>) {
-		return iterator(std::begin(std::get<I>(t))..., std::end(std::get<I>(t))..., 0);
-	}
-	template<std::size_t ...I>
-	iterator _end(std::index_sequence<I...>) {
-		return iterator(std::end(std::get<I>(t))..., std::end(std::get<I>(t))..., sizeof...(Iterables));
-	}
 	template<std::size_t ...I>
 	std::size_t _size(std::index_sequence<I...>) const { return (std::get<I>(t) + ...); }
 	std::tuple<Iterables...> t;
