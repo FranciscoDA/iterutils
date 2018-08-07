@@ -4,7 +4,6 @@
 #include <array>
 #include <variant>
 #include <tuple>
-#include "detail.h"
 
 namespace iterutils {
 
@@ -127,7 +126,7 @@ public:
 	using value_type = typename iterator::value_type;
 	using reference = typename iterator::reference;
 	using pointer = typename iterator::pointer;
-	chained_range_impl (detail::arg_from_uref_t<Iterables>... iterables)
+	chained_range_impl (std::add_rvalue_reference_t<Iterables>... iterables)
 		: t(std::forward<Iterables>(iterables)...) {
 	}
 	iterator begin() { return std::apply(chained_begin<std::remove_reference_t<Iterables>...>, t); }
@@ -147,7 +146,7 @@ public:
 	using reference = typename iterator::reference;
 	using pointer = typename iterator::pointer;
 
-	chained_range_impl(detail::arg_from_uref_t<Iterable1> iterable1, detail::arg_from_uref_t<Iterable2> iterable2)
+	chained_range_impl(std::add_rvalue_reference_t<Iterable1> iterable1, std::add_rvalue_reference_t<Iterable2> iterable2)
 		: iter1(std::forward<Iterable1>(iterable1)), iter2(std::forward<Iterable2>(iterable2)) {
 	}
 	iterator begin() { return iterator(std::begin(iter1), std::end(iter1), std::begin(iter2)); }

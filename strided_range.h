@@ -85,7 +85,7 @@ public:
 	using size_type = typename std::remove_reference_t<Iterable>::size_type;
 
 	strided_range_impl (
-		detail::arg_from_uref_t<Iterable> iter,
+		std::add_rvalue_reference_t<Iterable> iter,
 		size_type offset, size_type stride
 	) : _iter(iter), _offset(offset), _stride(stride) {
 	}

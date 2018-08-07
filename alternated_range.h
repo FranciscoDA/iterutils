@@ -4,18 +4,16 @@
 #include <variant>
 #include <array>
 
-#include "detail.h"
-
 namespace iterutils {
 
 template<typename ...Iterators>
 class alternated_iterator {
 public:
-	using value_type = std::common_type_t<Iterators::value_type...>;
+	using value_type = std::common_type_t<typename Iterators::value_type...>;
 	using reference = std::add_lvalue_reference_t<value_type>;
 	using pointer = std::add_pointer_t<value_type>;
 
-	alternated_iterator(Iterators iterators..., std::size_t index=0) : _its = {iterators...}, _index(index) {
+	alternated_iterator(Iterators... iterators, std::size_t index=0) : _its(iterators...), _index(index) {
 	}
 	alternated_iterator& operator++() {
 		++_index;
@@ -27,7 +25,7 @@ public:
 		return copy;
 	}
 	reference operator*() {
-		return std::visit([](Iterator&& it){ return *it; }, _its[_index % sizeof...(Iterators)]);
+		return std::visit([](auto&& it){ return *it; }, _its[_index % sizeof...(Iterators)]);
 	}
 	bool operator!=(const alternated_iterator& other) const {
 		return _logical_neq(other, std::index_sequence_for<Iterators...>());
@@ -35,7 +33,7 @@ public:
 private:
 	template<std::size_t ...I>	
 	bool _logical_neq(const alternated_iterator& other, std::index_sequence<I...>) const {
-		return (... && std::get<I>(_its) != std::get<I>(other._its));
+		return (... && (std::get<I>(_its) != std::get<I>(other._its)));
 	}
 	std::array<std::variant<Iterators...>, sizeof...(Iterators)> _its;
 	std::size_t _index;
@@ -55,12 +53,12 @@ template<typename ...Iterables>
 class alternated_range_impl {
 public:
 	using iterator = alternated_iterator<typename std::remove_reference_t<Iterables>::iterator...>;
-	using value_type = iterator::value_type;
-	using reference = iterator::reference;
-	using pointer = iterator::pointer;
+	using value_type = typename iterator::value_type;
+	using reference = typename iterator::reference;
+	using pointer = typename iterator::pointer;
 
-	alternated_range(util::arg_from_uref_t<Iterables>... iterables)
-		: t(iterables) {
+	alternated_range_impl(std::add_rvalue_reference_t<Iterables>... iterables)
+		: t(iterables...) {
 	}
 	iterator begin() { return std::apply(alternated_begin<std::remove_reference_t<Iterables>...>, t); }
 	iterator end() { return std::apply(alternated_end<std::remove_reference_t<Iterables>...>, t); }

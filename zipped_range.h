@@ -2,7 +2,6 @@
 #define _ITERUTILS_ZIPPED_RANGE_H_
 
 #include <tuple>
-#include "detail.h"
 
 namespace iterutils {
 
@@ -84,7 +83,7 @@ public:
 	using pointer = typename iterator::pointer;
 	using reference = typename iterator::reference;
 
-	zipped_range_impl (detail::arg_from_uref_t<Iterables>... iterables)
+	zipped_range_impl (std::add_rvalue_reference_t<Iterables>... iterables)
 		: t(std::forward<Iterables>(iterables)...) {
 	}
 	iterator begin() { return std::apply(zipped_begin<std::remove_reference_t<Iterables>...>, t); }

@@ -4,6 +4,7 @@
 #include "../chained_range.h"
 #include "../strided_range.h"
 #include "../cycle_range.h"
+#include "../alternated_range.h"
 
 #include <iostream>
 #include <vector>
@@ -14,6 +15,7 @@ struct HeavyObject {
 	int i;
 	HeavyObject(const HeavyObject& other) { throw std::exception(); }
 	HeavyObject(int _i) : i(_i) {}
+	~HeavyObject() { i = 0; }
 };
 
 int main() {

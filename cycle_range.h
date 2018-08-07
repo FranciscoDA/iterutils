@@ -4,8 +4,6 @@
 #include <iterator>
 #include <limits>
 
-#include "detail.h"
-
 namespace iterutils {
 
 template<typename Iterator>
@@ -93,7 +91,7 @@ public:
 	using pointer = typename iterator::pointer;
 	using reference = typename iterator::reference;
 	
-	cycle_range_n_impl(detail::arg_from_uref_t<Iterable> iterable, std::size_t maxcycles)
+	cycle_range_n_impl(std::add_rvalue_reference_t<Iterable> iterable, std::size_t maxcycles)
 		: _iterable(iterable), _maxcycles(maxcycles) {
 	}
 	iterator begin() { return iterator(std::begin(_iterable), std::end(_iterable), _maxcycles); }
@@ -112,7 +110,7 @@ public:
 	using pointer = typename iterator::pointer;
 	using reference = typename iterator::reference;
 	
-	cycle_range_impl(detail::arg_from_uref_t<Iterable> iterable)
+	cycle_range_impl(std::add_rvalue_reference_t<Iterable> iterable)
 		: _iterable(iterable) {
 	}
 	iterator begin() { return iterator(std::begin(_iterable), std::end(_iterable)); }
