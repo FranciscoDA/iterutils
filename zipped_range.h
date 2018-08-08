@@ -10,6 +10,55 @@ namespace detail {
 template<typename Tag, typename ...Iterators>
 class zipped_iterator_impl {};
 
+template<typename Tag, typename ...Iterators>
+zipped_iterator_impl<Tag, Iterators...>& operator++(zipped_iterator_impl<Tag, Iterators...>& x) {
+	x._prefix_inc(std::index_sequence_for<Iterators...>());
+	return x;
+}
+template<typename Tag, typename ...Iterators>
+zipped_iterator_impl<Tag, Iterators...>& operator++(zipped_iterator_impl<Tag, Iterators...>& x, int) {
+	auto copy = x;
+	x._suffix_inc(std::index_sequence_for<Iterators...>());
+	return copy;
+}
+template<typename Tag, typename ...Iterators>
+zipped_iterator_impl<Tag, Iterators...>& operator--(zipped_iterator_impl<Tag, Iterators...>& x) {
+	x._prefix_dec(std::index_sequence_for<Iterators...>());
+	return x;
+}
+template<typename Tag, typename ...Iterators>
+zipped_iterator_impl<Tag, Iterators...>& operator--(zipped_iterator_impl<Tag, Iterators...>& x, int) {
+	auto copy = x;
+	x._suffix_dec(std::index_sequence_for<Iterators...>());
+	return copy;
+}
+template<typename Tag, typename ...Iterators>
+zipped_iterator_impl<Tag, Iterators...>&
+operator+=(zipped_iterator_impl<Tag, Iterators...>& it, typename zipped_iterator_impl<Tag, Iterators...>::difference_type n) {
+	it._inplace_add(n, std::index_sequence_for<Iterators...>());
+	return it;
+}
+template<typename Tag, typename ...Iterators>
+zipped_iterator_impl<Tag, Iterators...>
+operator+(const zipped_iterator_impl<Tag, Iterators...>& it, typename zipped_iterator_impl<Tag, Iterators...>::difference_type n) {
+	auto copy = it;
+	copy._inplace_add(n, std::index_sequence_for<Iterators...>());
+	return copy;
+}
+template<typename Tag, typename ...Iterators>
+zipped_iterator_impl<Tag, Iterators...>&
+operator-=(zipped_iterator_impl<Tag, Iterators...>& it, typename zipped_iterator_impl<Tag, Iterators...>::difference_type n) {
+	it._inplace_sub(n, std::index_sequence_for<Iterators...>());
+	return it;
+}
+template<typename Tag, typename ...Iterators>
+zipped_iterator_impl<Tag, Iterators...>
+operator-(const zipped_iterator_impl<Tag, Iterators...>& it, typename zipped_iterator_impl<Tag, Iterators...>::difference_type n) {
+	zipped_iterator_impl<Tag, Iterators...> copy = it;
+	copy._inplace_sub(n, std::index_sequence_for<Iterators...>());
+	return copy;
+}
+
 template<typename ...Iterators>
 class zipped_iterator_impl<std::input_iterator_tag, Iterators...> {
 public:
@@ -21,12 +70,11 @@ public:
 
 	zipped_iterator_impl(Iterators... args) : t(args...) {
 	}
-	zipped_iterator_impl() = delete;
+	zipped_iterator_impl() = delete; // some iterators are not default constructible
 
-	auto& operator++() {
-		_prefix_inc(std::index_sequence_for<Iterators...>());
-		return *this;
-	}
+	// input iterator operators
+	friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&);
+
 	reference operator*() const {
 		return _deref(std::index_sequence_for<Iterators...>());
 	}
@@ -77,15 +125,13 @@ public:
 	zipped_iterator_impl() {
 	}
 	// methods copied over from base iterators
-	auto& operator++() {
-		_prefix_inc(std::index_sequence_for<Iterators...>());
-		return *this;
-	}
+	friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&);
 	// forward iterator operators
-	auto operator++(int) {
-		auto copy = *this;
-		this->_prefix_inc(std::index_sequence_for<Iterators...>());
-		return copy;
+	friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&, int);
+protected:
+	template<std::size_t ...I>
+	void _suffix_inc(std::index_sequence<I...>) {
+		(... , (std::get<I>(this->t)++));
 	}
 };
 
@@ -105,30 +151,20 @@ public:
 	zipped_iterator_impl() {
 	}
 	// methods copied over from base iterators
-	auto& operator++() {
-		_prefix_inc(std::index_sequence_for<Iterators...>());
-		return *this;
-	}
-	auto operator++(int) {
-		auto copy = *this;
-		this->_prefix_inc(std::index_sequence_for<Iterators...>());
-		return copy;
-	}
+	friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&);
+	friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&, int);
 	// bidirectional iterator operators
-	auto& operator--() {
-		_prefix_dec(std::index_sequence_for<Iterators...>());
-		return *this;
-	}
-	auto operator--(int) {
-		auto copy = *this;
-		_prefix_dec(std::index_sequence_for<Iterators...>());
-		return copy;
-	}
+	friend zipped_iterator_impl& operator--<iterator_category, Iterators...>(zipped_iterator_impl&);
+	friend zipped_iterator_impl& operator--<iterator_category, Iterators...>(zipped_iterator_impl&, int);
 protected:
 	// use a fold expression to decrement all the inner iterators
 	template<std::size_t ...I>
 	void _prefix_dec(std::index_sequence<I...>) {
 		(... , --std::get<I>(this->t));
+	}
+	template<std::size_t ...I>
+	void _suffix_dec(std::index_sequence<I...>) {
+		(... , (std::get<I>(this->t)--));
 	}
 };
 
@@ -148,43 +184,16 @@ public:
 	zipped_iterator_impl() {
 	}
 	// methods copied over from base iterators
-	auto& operator++() {
-		this->_prefix_inc(std::index_sequence_for<Iterators...>());
-		return *this;
-	}
-	auto operator++(int) {
-		auto copy = *this;
-		this->_prefix_inc(std::index_sequence_for<Iterators...>());
-		return copy;
-	}
-	auto& operator--() {
-		this->_prefix_dec(std::index_sequence_for<Iterators...>());
-		return *this;
-	}
-	auto operator--(int) {
-		auto copy = *this;
-		_prefix_dec(std::index_sequence_for<Iterators...>());
-		return copy;
-	}
+	friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&);
+	friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&, int);
+	friend zipped_iterator_impl& operator--<iterator_category, Iterators...>(zipped_iterator_impl&);
+	friend zipped_iterator_impl& operator--<iterator_category, Iterators...>(zipped_iterator_impl&, int);
 	// random access iterator operators
-	auto& operator+=(difference_type n) {
-		_inplace_add(n, std::index_sequence_for<Iterators...>());
-		return *this;
-	}
-	auto operator+(difference_type n) {
-		auto copy = *this;
-		copy._inplace_add(n, std::index_sequence_for<Iterators...>());
-		return copy;
-	}
-	auto& operator-=(difference_type n) {
-		_inplace_sub(n, std::index_sequence_for<Iterators...>());
-		return *this;
-	}
-	auto operator-(difference_type n) {
-		auto copy = *this;
-		copy._inplace_sub(n, std::index_sequence_for<Iterators...>());
-		return copy;
-	}
+	friend zipped_iterator_impl& operator+=<iterator_category, Iterators...>(zipped_iterator_impl&, difference_type);
+	friend zipped_iterator_impl operator+<iterator_category, Iterators...>(const zipped_iterator_impl&, difference_type);
+	friend zipped_iterator_impl& operator-=<iterator_category, Iterators...>(zipped_iterator_impl&, difference_type);
+	friend zipped_iterator_impl operator-<iterator_category, Iterators...>(const zipped_iterator_impl&, difference_type);
+
 	bool operator<(const zipped_iterator_impl& other) const {
 		return this->t < other.t;
 	}
