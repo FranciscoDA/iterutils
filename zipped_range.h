@@ -11,25 +11,25 @@ template<typename Tag, typename ...Iterators>
 class zipped_iterator_impl {};
 
 template<typename Tag, typename ...Iterators>
-zipped_iterator_impl<Tag, Iterators...>& operator++(zipped_iterator_impl<Tag, Iterators...>& x) {
-	x._prefix_inc(std::index_sequence_for<Iterators...>());
-	return x;
+zipped_iterator_impl<Tag, Iterators...>& operator++(zipped_iterator_impl<Tag, Iterators...>& it) {
+	it._prefix_inc(std::index_sequence_for<Iterators...>());
+	return it;
 }
 template<typename Tag, typename ...Iterators>
-zipped_iterator_impl<Tag, Iterators...>& operator++(zipped_iterator_impl<Tag, Iterators...>& x, int) {
-	auto copy = x;
-	x._suffix_inc(std::index_sequence_for<Iterators...>());
+zipped_iterator_impl<Tag, Iterators...>& operator++(zipped_iterator_impl<Tag, Iterators...>& it, int) {
+	auto copy = it;
+	it._suffix_inc(std::index_sequence_for<Iterators...>());
 	return copy;
 }
 template<typename Tag, typename ...Iterators>
-zipped_iterator_impl<Tag, Iterators...>& operator--(zipped_iterator_impl<Tag, Iterators...>& x) {
-	x._prefix_dec(std::index_sequence_for<Iterators...>());
-	return x;
+zipped_iterator_impl<Tag, Iterators...>& operator--(zipped_iterator_impl<Tag, Iterators...>& it) {
+	it._prefix_dec(std::index_sequence_for<Iterators...>());
+	return it;
 }
 template<typename Tag, typename ...Iterators>
-zipped_iterator_impl<Tag, Iterators...>& operator--(zipped_iterator_impl<Tag, Iterators...>& x, int) {
-	auto copy = x;
-	x._suffix_dec(std::index_sequence_for<Iterators...>());
+zipped_iterator_impl<Tag, Iterators...>& operator--(zipped_iterator_impl<Tag, Iterators...>& it, int) {
+	auto copy = it;
+	it._suffix_dec(std::index_sequence_for<Iterators...>());
 	return copy;
 }
 template<typename Tag, typename ...Iterators>
@@ -81,6 +81,9 @@ public:
 	bool operator!=(const zipped_iterator_impl& other) const {
 		return _logical_neq(other, std::index_sequence_for<Iterators...>());
 	}
+	bool operator==(const zipped_iterator_impl& other) const {
+		return !_logical_neq(other, std::index_sequence_for<Iterators...>());
+	}
 
 	template<std::size_t I>
 	auto& get() const { return std::get<I>(t); }
@@ -101,8 +104,8 @@ protected:
 		return reference(*std::get<I>(t)...);
 	}
 
-	// use a fold expression that returns true only when all corresponding iterators are different
-	// this causes the iteration to stop at the shortest range
+	// return true if all the iterators in t are different from their counterparts in other
+	// this ensures that iteration will stop on the shortest range
 	template<std::size_t ...I>
 	bool _logical_neq(const zipped_iterator_impl& other, std::index_sequence<I...>) const {
 		return (... && (std::get<I>(t)!=std::get<I>(other.t)));
@@ -227,22 +230,22 @@ using zipped_iterator = detail::zipped_iterator_impl<
 >;
  
 template<typename ...Iterables>
-auto zipped_begin(Iterables&... args) {
+zipped_iterator<typename Iterables::iterator...> zipped_begin(Iterables&... args) {
 	return zipped_iterator<typename Iterables::iterator...>(std::begin(args)...);
 }
 
 template<typename ...Iterables>
-auto zipped_cbegin(const Iterables&... args) {
+zipped_iterator<typename Iterables::const_iterator...> zipped_cbegin(const Iterables&... args) {
 	return zipped_iterator<typename Iterables::const_iterator...>(std::cbegin(args)...);
 }
 
 template<typename ...Iterables>
-auto zipped_end(Iterables&... args) {
+zipped_iterator<typename Iterables::iterator...> zipped_end(Iterables&... args) {
 	return zipped_iterator<typename Iterables::iterator...>(std::end(args)...);
 }
 
 template<typename ...Iterables>
-auto zipped_cend(const Iterables&... args) {
+zipped_iterator<typename Iterables::const_iterator...> zipped_cend(const Iterables&... args) {
 	return zipped_iterator<typename Iterables::const_iterator...>(std::cend(args)...);
 }
 

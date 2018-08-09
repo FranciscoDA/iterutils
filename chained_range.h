@@ -102,20 +102,19 @@ public:
 };
 
 template<typename ...Iterables>
-auto chained_begin(Iterables&... iterables) {
+chained_iterator<typename Iterables::iterator...> chained_begin(Iterables&... iterables) {
 	return chained_iterator<typename Iterables::iterator...>(std::begin(iterables)..., std::end(iterables)..., 0);
 }
 template<typename ...Iterables>
-auto chained_end(Iterables&... iterables) {
+chained_iterator<typename Iterables::iterator...> chained_end(Iterables&... iterables) {
 	return chained_iterator<typename Iterables::iterator...>(std::end(iterables)..., std::end(iterables)..., sizeof...(Iterables));
 }
-
 template<typename Iterable1, typename Iterable2>
-auto chained_begin(Iterable1& iter1, Iterable2& iter2) {
+chained_iterator<typename Iterable1::iterator, typename Iterable2::iterator> chained_begin(Iterable1& iter1, Iterable2& iter2) {
 	return chained_iterator<typename Iterable1::iterator, typename Iterable2::iterator>(std::begin(iter1), std::end(iter1), std::begin(iter2));
 }
 template<typename Iterable1, typename Iterable2>
-auto chained_end(Iterable1& iter1, Iterable2& iter2) {
+chained_iterator<typename Iterable1::iterator, typename Iterable2::iterator> chained_end(Iterable1& iter1, Iterable2& iter2) {
 	return chained_iterator<typename Iterable1::iterator, typename Iterable2::iterator>(std::end(iter1), std::end(iter1), std::end(iter2));
 }
 
