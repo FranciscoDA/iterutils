@@ -70,7 +70,10 @@ public:
 
 	zipped_iterator_impl(Iterators... args) : t(args...) {
 	}
-	zipped_iterator_impl() = delete; // some iterators are not default constructible
+	// some iterators are non-copyable so the zipped iterator is not copyable either
+	zipped_iterator_impl(const zipped_iterator_impl& other) = delete;
+	// some iterators are not default constructible so the zipped iterator is not default constructible either
+	zipped_iterator_impl() = delete;
 
 	// input iterator operators
 	friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&);
@@ -88,8 +91,6 @@ public:
 	template<std::size_t I>
 	auto& get() const { return std::get<I>(t); }
 protected:
-	zipped_iterator_impl(const std::tuple<Iterators...>& _t) : t(_t) {
-	}
 	std::tuple<Iterators...> t;
 
 	// use a fold expression to increment all the inner iterators
@@ -147,12 +148,7 @@ public:
 	using difference_type = typename zipped_iterator_impl<std::input_iterator_tag, Iterators...>::difference_type;
 	using iterator_category = std::bidirectional_iterator_tag;
 
-	zipped_iterator_impl(Iterators... args) : zipped_iterator_impl<std::forward_iterator_tag, Iterators...>(args...) {
-	}
-	zipped_iterator_impl(const zipped_iterator_impl& other) : zipped_iterator_impl<std::forward_iterator_tag, Iterators...>(other) {
-	}
-	zipped_iterator_impl() {
-	}
+	using zipped_iterator_impl<std::forward_iterator_tag, Iterators...>::zipped_iterator_impl;
 	// methods copied over from base iterators
 	friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&);
 	friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&, int);
@@ -180,12 +176,7 @@ public:
 	using difference_type = typename zipped_iterator_impl<std::input_iterator_tag, Iterators...>::difference_type;
 	using iterator_category = std::random_access_iterator_tag;
 
-	zipped_iterator_impl(Iterators... args) : zipped_iterator_impl<std::bidirectional_iterator_tag, Iterators...>(args...) {
-	}
-	zipped_iterator_impl(const zipped_iterator_impl& other) : zipped_iterator_impl<std::bidirectional_iterator_tag, Iterators...>(other) {
-	}
-	zipped_iterator_impl() {
-	}
+	using zipped_iterator_impl<std::bidirectional_iterator_tag, Iterators...>::zipped_iterator_impl;
 	// methods copied over from base iterators
 	friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&);
 	friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&, int);

@@ -7,115 +7,207 @@
 
 namespace iterutils {
 
+namespace detail {
+
+template<typename Tag, typename ...Iterators>
+class chained_iterator_impl {};
+
+template<typename Tag, typename ...Iterators>
+chained_iterator_impl<Tag, Iterators...>& operator++(chained_iterator_impl<Tag, Iterators...>& it) {
+	std::visit([](auto& it) { ++it; }, it.pos_[it.index_]);
+	if (it.index_ < sizeof...(Iterators) and it.pos_[it.index_] == it.ends_[it.index_])
+		++it.index_;
+	return it;
+}
+template<typename Tag, typename ...Iterators>
+chained_iterator_impl<Tag, Iterators...> operator++(chained_iterator_impl<Tag, Iterators...>& it, int) {
+	chained_iterator_impl<Tag, Iterators...> copy = it;
+	++it;
+	return copy;
+}
+template<typename Tag, typename ...Iterators>
+chained_iterator_impl<Tag, Iterators...>& operator--(chained_iterator_impl<Tag, Iterators...>& it) {
+	if (it.pos_[it.index_] == it.begins_[it.index_])
+		--it.index_;
+	std::visit([](auto& it) { --it; }, it.pos_[it.index_]);
+	return it;
+}
+template<typename Tag, typename ...Iterators>
+chained_iterator_impl<Tag, Iterators...> operator--(chained_iterator_impl<Tag, Iterators...>& it, int) {
+	chained_iterator_impl<Tag, Iterators...> copy = it;
+	--it;
+	return copy;
+}
+template<typename Tag, typename ...Iterators>
+chained_iterator_impl<Tag, Iterators...>&
+operator+=(chained_iterator_impl<Tag, Iterators...>& it, typename chained_iterator_impl<Tag, Iterators...>::difference_type n) {
+	while (n > it.ends_[it.index_] - it.pos_[it.index_]) {
+		n -= it.ends_[it.index_] - it.pos_[it.index_];
+		it.pos_[it.index_] = it.ends_[it.index_];
+		++it.index_;
+	}
+	it.pos_[it.index_] += n;
+}
+template<typename Tag, typename ...Iterators>
+chained_iterator_impl<Tag, Iterators...>
+operator+(const chained_iterator_impl<Tag, Iterators...>& it, typename chained_iterator_impl<Tag, Iterators...>::difference_type n) {
+	chained_iterator_impl<Tag, Iterators...> copy = it;
+	return (copy += n);
+}
+template<typename Tag, typename ...Iterators>
+chained_iterator_impl<Tag, Iterators...>&
+operator-=(chained_iterator_impl<Tag, Iterators...>& it, typename chained_iterator_impl<Tag, Iterators...>::difference_type n) {
+	while (n > it.pos_[it.index_] - it.begins_[it.index_]) {
+		n -= it.pos_[it.index_] - it.begins_[it.index_];
+		it.pos_[it.index_] = it.begins_[it.index_];
+		--it.index_;
+	}
+	it.pos_[it.index_] -= n;
+}
+template<typename Tag, typename ...Iterators>
+chained_iterator_impl<Tag, Iterators...>
+operator-(const chained_iterator_impl<Tag, Iterators...>& it, typename chained_iterator_impl<Tag, Iterators...>::difference_type n) {
+	chained_iterator_impl<Tag, Iterators...> copy = it;
+	return (copy -= n);
+}
+
 template<typename ...Iterators>
-class chained_iterator {
+class chained_iterator_impl<std::input_iterator_tag, Iterators...> {
 public:
 	using value_type = std::common_type_t<typename Iterators::value_type...>;
-	using pointer = value_type*;
-	using reference = value_type&;
+	using reference = std::add_lvalue_reference_t<value_type>;
+	using pointer = std::add_pointer_t<value_type>;
+	using difference_type = std::common_type_t<typename Iterators::difference_type...>;
+	using iterator_category = std::input_iterator_tag;
 
-	// need to use in_place_index_t to disambiguate the variant's index in case multiple types are the same
 	template<std::size_t ...I>
-	chained_iterator(std::index_sequence<I...>, Iterators... begins, Iterators... ends, std::size_t index)
-		: _begins{element_type(std::in_place_index_t<I>(), begins)...},
-		  _ends{element_type(std::in_place_index_t<I>(), ends)...},
-		  _index(index) {
+	chained_iterator_impl(std::index_sequence<I...>, Iterators... pos, Iterators... ends, std::size_t index)
+		: pos_{element_type(std::in_place_index_t<I>(), pos)...},
+		ends_{element_type(std::in_place_index_t<I>(), ends)...},
+		index_(index) {
 	}
-	chained_iterator(Iterators... begins, Iterators... ends, std::size_t index)
-		: chained_iterator(std::index_sequence_for<Iterators...>(), begins..., ends..., index) {
+	chained_iterator_impl(Iterators... pos, Iterators... ends, std::size_t index=0)
+		: chained_iterator_impl(std::index_sequence_for<Iterators...>(), pos..., ends..., index) {
 	}
+	chained_iterator_impl(const chained_iterator_impl& other) = delete;
+	chained_iterator_impl() = delete;
+
 	reference operator*() const {
-		return *std::visit([](auto& it) { return it; }, _begins[_index]);
+		return *std::visit([](auto&& it) { return it; }, pos_[index_]);
 	}
-	chained_iterator& operator++() {
-		std::visit([](auto& it) { ++it; }, _begins[_index]);
-		if (_index < sizeof...(Iterators) and _begins[_index] == _ends[_index])
-			++_index;
-		return *this;
+	bool operator!=(const chained_iterator_impl& other) const {
+		return pos_[index_] != other.pos_[other.index_];
 	}
-	chained_iterator operator++(int) {
-		chained_iterator copy = *this;
-		++(*this);
-		return copy;
+	bool operator==(const chained_iterator_impl& other) const {
+		return pos_[index_] == other.pos_[other.index_];
 	}
-	bool operator!=(const chained_iterator& other) const {
-		if (_index == other._index) {
-			// both iterators are in the same subrange
-			if (_index < sizeof...(Iterators)) {
-				return _begins[_index] != other._begins[other._index];
-			}
-			// both iterators are past the last subrange. essentially, they are equal
-			else {
-				return false;
-			}
-		}
-		// the iterators are in different subranges. they are not equal
-		return true;
-	}
-private:
+
+	friend chained_iterator_impl& operator++<std::input_iterator_tag, Iterators...>(chained_iterator_impl&);
+protected:
 	using element_type = std::variant<Iterators...>;
-	std::array<element_type, sizeof...(Iterators)> _begins;
-	std::array<element_type, sizeof...(Iterators)> _ends;
-	std::size_t _index;
+	std::array<element_type, sizeof...(Iterators)> pos_;
+	std::array<element_type, sizeof...(Iterators)> ends_;
+	std::size_t index_;
 };
-
-// template specialization for only two subranges
-// should be more efficient
-template<typename Iterator1, typename Iterator2>
-class chained_iterator<Iterator1, Iterator2> {
-private:
-	Iterator1 it1;
-	Iterator1 it1_end;
-	Iterator2 it2;
+template<typename ...Iterators>
+class chained_iterator_impl<std::forward_iterator_tag, Iterators...> : public chained_iterator_impl<std::input_iterator_tag, Iterators...> {
 public:
-	using value_type = std::common_type_t<typename Iterator1::value_type, typename Iterator2::value_type>;
-	using pointer = value_type*;
-	using reference = value_type&;
+	using value_type = typename chained_iterator_impl<std::input_iterator_tag, Iterators...>::value_type;
+	using reference = typename chained_iterator_impl<std::input_iterator_tag, Iterators...>::reference;
+	using pointer = typename chained_iterator_impl<std::input_iterator_tag, Iterators...>::pointer;
+	using difference_type = typename chained_iterator_impl<std::input_iterator_tag, Iterators...>::difference_type;
+	using iterator_category = std::forward_iterator_tag;
 
-	chained_iterator(Iterator1 pos1, Iterator1 middle, Iterator2 pos2) : it1(pos1), it1_end(middle), it2(pos2) {
+	chained_iterator_impl(Iterators... pos, Iterators... ends, std::size_t index=0)
+		: chained_iterator_impl<std::input_iterator_tag, Iterators...>(std::index_sequence_for<Iterators...>(), pos..., ends..., index) {
 	}
-	reference operator*() const {
-		if (it1 != it1_end)
-			return *it1;
-		else
-			return *it2;
+	chained_iterator_impl(const chained_iterator_impl& other) = default;
+	chained_iterator_impl() = default;
+
+	// inherited operators
+	friend chained_iterator_impl& operator++<std::forward_iterator_tag, Iterators...>(chained_iterator_impl&);
+	// forward iterator operators
+	friend chained_iterator_impl operator++<std::forward_iterator_tag, Iterators...>(chained_iterator_impl&, int);
+};
+template<typename ...Iterators>
+class chained_iterator_impl<std::bidirectional_iterator_tag, Iterators...> : public chained_iterator_impl<std::forward_iterator_tag, Iterators...> {
+public:
+	using value_type = typename chained_iterator_impl<std::forward_iterator_tag, Iterators...>::value_type;
+	using reference = typename chained_iterator_impl<std::forward_iterator_tag, Iterators...>::reference;
+	using pointer = typename chained_iterator_impl<std::forward_iterator_tag, Iterators...>::pointer;
+	using difference_type = typename chained_iterator_impl<std::forward_iterator_tag, Iterators...>::difference_type;
+	using iterator_category = std::bidirectional_iterator_tag;
+
+	template<std::size_t ...I>
+	chained_iterator_impl(std::index_sequence<I...>, Iterators... pos, Iterators... ends, std::size_t index)
+		: chained_iterator_impl<std::forward_iterator_tag, Iterators...>(pos..., ends..., index),
+		begins_{typename chained_iterator_impl<std::forward_iterator_tag, Iterators...>::element_type(std::in_place_index_t<I>(), pos)...} {
 	}
-	chained_iterator& operator++() {
-		if (it1 != it1_end)
-			++it1;
-		else
-			++it2;
-		return *this;
+	chained_iterator_impl(Iterators... pos, Iterators... ends, std::size_t index=0)
+		: chained_iterator_impl(std::index_sequence_for<Iterators...>(), pos..., ends..., index) {
 	}
-	chained_iterator operator++(int) {
-		chained_iterator copy = *this;
-		++(*this);
-		return copy;
+	chained_iterator_impl(const chained_iterator_impl& other) = default;
+	chained_iterator_impl() = default;
+
+	// inherited operators
+	friend chained_iterator_impl& operator++<std::bidirectional_iterator_tag, Iterators...>(chained_iterator_impl&);
+	friend chained_iterator_impl operator++<std::bidirectional_iterator_tag, Iterators...>(chained_iterator_impl&, int);
+	// bidirectional iterator operators
+	friend chained_iterator_impl& operator--<std::bidirectional_iterator_tag, Iterators...>(chained_iterator_impl&);
+	friend chained_iterator_impl operator--<std::bidirectional_iterator_tag, Iterators...>(chained_iterator_impl&, int);
+protected:
+	std::array<
+		typename chained_iterator_impl<std::forward_iterator_tag, Iterators...>::element_type,
+		sizeof...(Iterators)
+	> begins_;
+};
+template<typename ...Iterators>
+class chained_iterator_impl<std::random_access_iterator_tag, Iterators...> : public chained_iterator_impl<std::bidirectional_iterator_tag, Iterators...> {
+public:
+	using value_type = typename chained_iterator_impl<std::bidirectional_iterator_tag, Iterators...>::value_type;
+	using reference = typename chained_iterator_impl<std::bidirectional_iterator_tag, Iterators...>::reference;
+	using pointer = typename chained_iterator_impl<std::bidirectional_iterator_tag, Iterators...>::pointer;
+	using difference_type = typename chained_iterator_impl<std::bidirectional_iterator_tag, Iterators...>::difference_type;
+	using iterator_category = std::random_access_iterator_tag;
+
+	using chained_iterator_impl<std::bidirectional_iterator_tag, Iterators...>::chained_iterator_impl;
+
+	// inherited operators
+	friend chained_iterator_impl& operator++<std::random_access_iterator_tag, Iterators...>(chained_iterator_impl&);
+	friend chained_iterator_impl operator++<std::random_access_iterator_tag, Iterators...>(chained_iterator_impl&, int);
+	friend chained_iterator_impl& operator--<std::random_access_iterator_tag, Iterators...>(chained_iterator_impl&);
+	friend chained_iterator_impl operator--<std::random_access_iterator_tag, Iterators...>(chained_iterator_impl&, int);
+	// random access iterator operators
+	friend chained_iterator_impl& operator+=<std::random_access_iterator_tag, Iterators...>(chained_iterator_impl&, difference_type);
+	friend chained_iterator_impl operator+<std::random_access_iterator_tag, Iterators...>(const chained_iterator_impl&, difference_type);
+	friend chained_iterator_impl& operator-=<std::random_access_iterator_tag, Iterators...>(chained_iterator_impl&, difference_type);
+	friend chained_iterator_impl operator-<std::random_access_iterator_tag, Iterators...>(const chained_iterator_impl&, difference_type);
+	bool operator<(const chained_iterator_impl& other) const {
+		return (this->index_ < other.index_) or (this->index_ == other.index_ and this->pos_[this->index_] < other.pos_[other.index_]);
 	}
-	bool operator!=(const chained_iterator& other) const {
-		if (it1 != it1_end and other.it1 != other.it1_end)
-			return it1 != other.it1;
-		else if (it1 == it1_end and other.it1 == other.it1_end)
-			return it2 != other.it2;
-		return true;
+	bool operator<=(const chained_iterator_impl& other) const {
+		return (this->index_ < other.index_) or (this->index_ == other.index_ and this->pos_[this->index_] <= other.pos_[other.index_]);
+	}
+	bool operator>(const chained_iterator_impl& other) const {
+		return (this->index_ > other.index_) or (this->index_ == other.index_ and this->pos_[this->index_] > other.pos_[other.index_]);
+	}
+	bool operator>=(const chained_iterator_impl& other) const {
+		return (this->index_ > other.index_) or (this->index_ == other.index_ and this->pos_[this->index_] >= other.pos_[other.index_]);
 	}
 };
+
+} // namespace detail
+
+template<typename ...Iterators>
+using chained_iterator = detail::chained_iterator_impl<std::common_type_t<typename Iterators::iterator_category...>, Iterators...>;
 
 template<typename ...Iterables>
 chained_iterator<typename Iterables::iterator...> chained_begin(Iterables&... iterables) {
-	return chained_iterator<typename Iterables::iterator...>(std::begin(iterables)..., std::end(iterables)..., 0);
+	return chained_iterator<typename Iterables::iterator...>(std::begin(iterables)..., std::end(iterables)...);
 }
 template<typename ...Iterables>
 chained_iterator<typename Iterables::iterator...> chained_end(Iterables&... iterables) {
 	return chained_iterator<typename Iterables::iterator...>(std::end(iterables)..., std::end(iterables)..., sizeof...(Iterables));
-}
-template<typename Iterable1, typename Iterable2>
-chained_iterator<typename Iterable1::iterator, typename Iterable2::iterator> chained_begin(Iterable1& iter1, Iterable2& iter2) {
-	return chained_iterator<typename Iterable1::iterator, typename Iterable2::iterator>(std::begin(iter1), std::end(iter1), std::begin(iter2));
-}
-template<typename Iterable1, typename Iterable2>
-chained_iterator<typename Iterable1::iterator, typename Iterable2::iterator> chained_end(Iterable1& iter1, Iterable2& iter2) {
-	return chained_iterator<typename Iterable1::iterator, typename Iterable2::iterator>(std::end(iter1), std::end(iter1), std::end(iter2));
 }
 
 template<typename ...Iterables>
@@ -135,25 +227,6 @@ private:
 	template<std::size_t ...I>
 	std::size_t _size(std::index_sequence<I...>) const { return (std::get<I>(t) + ...); }
 	std::tuple<Iterables...> t;
-};
-
-template<typename Iterable1, typename Iterable2>
-class chained_range_impl<Iterable1, Iterable2> {
-public:
-	using iterator = chained_iterator<typename std::remove_reference_t<Iterable1>::iterator, typename std::remove_reference_t<Iterable2>::iterator>;
-	using value_type = typename iterator::value_type;
-	using reference = typename iterator::reference;
-	using pointer = typename iterator::pointer;
-
-	chained_range_impl(std::add_rvalue_reference_t<Iterable1> iterable1, std::add_rvalue_reference_t<Iterable2> iterable2)
-		: iter1(std::forward<Iterable1>(iterable1)), iter2(std::forward<Iterable2>(iterable2)) {
-	}
-	iterator begin() { return iterator(std::begin(iter1), std::end(iter1), std::begin(iter2)); }
-	iterator end() { return iterator(std::end(iter1), std::end(iter1), std::end(iter2)); }
-	std::size_t size() const { return iter1.size() + iter2.size(); }
-private:
-	Iterable1 iter1;
-	Iterable2 iter2;
 };
 
 // need universal reference to determine whether to store
