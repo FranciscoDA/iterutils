@@ -134,7 +134,7 @@ namespace detail {
 		bool operator> (const cycle_iterator_impl& other) const { return this->it_ >  other.it_; }
 		bool operator>=(const cycle_iterator_impl& other) const { return this->it_ >= other.it_; }
 	};
-}
+} // namespace detail
 
 template<typename Iterator>
 using cycle_iterator = detail::cycle_iterator_impl<typename Iterator::iterator_category, Iterator>;
@@ -165,7 +165,7 @@ namespace detail {
 	private:
 		Iterable iterable_;
 	};
-}
+} // namespace detail
 
 template<typename Iterable>
 auto cycle_range(Iterable&& iterable) {

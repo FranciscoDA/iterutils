@@ -148,7 +148,7 @@ namespace detail {
 			return (this->n_ < other.n_) or (this->n_ == other.n_ and this->it_ >= other.it_);
 		}
 	};
-}
+} // namespace detail
 
 template<typename Iterator>
 using ncycle_iterator = detail::ncycle_iterator_impl<typename Iterator::iterator_category, Iterator>;
@@ -180,7 +180,7 @@ namespace detail {
 		Iterable iterable_;
 		std::size_t n_;
 	};
-}
+} // namespace detail
 
 template<typename Iterable>
 auto ncycle_range(Iterable&& iterable, std::size_t n) {
