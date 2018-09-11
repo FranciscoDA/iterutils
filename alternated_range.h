@@ -75,7 +75,8 @@ private:
 	std::size_t _element_size() const {
 		// the size of a cycle_range_impl would overflow due to multiplication or addition
 		// add a special case to handle cycle_range_impls
-		if constexpr(std::is_same_v<std::remove_reference_t<std::tuple_element_t<I, decltype(t)>>, cycle_range_impl>) {
+		using T = std::tuple_element_t<I, decltype(t)>;
+		if constexpr(std::is_same_v<std::remove_reference_t<T>, cycle_range<T>>) {
 			return std::numeric_limits<std::size_t>::max();
 		}
 		return std::get<I>(t).size() * sizeof...(Iterables) + I;
