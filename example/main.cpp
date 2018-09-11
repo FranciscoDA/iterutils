@@ -4,6 +4,7 @@
 #include "../chained_range.h"
 #include "../strided_range.h"
 #include "../cycle_range.h"
+#include "../ncycle_range.h"
 #include "../alternated_range.h"
 
 #include <iostream>
@@ -76,7 +77,7 @@ int main() {
 
 	std::cout << "Test 7: Cycle iterator" << std::endl;
 	std::cout << "v1..v1..v1 = ";
-	for(auto& x : cycle_range(v1, 3)) {
+	for(auto& x : ncycle_range(v1, 3)) {
 		std::cout << x.i << ",";
 	}
 	std::cout << std::endl;
