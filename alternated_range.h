@@ -6,6 +6,56 @@
 
 namespace iterutils {
 
+namespace detail {
+	template<typename Tag, typename ...Iterators>
+	class alternated_iterator_impl {};
+
+	template<typename Tag, typename ...Iterators>
+	alternated_iterator_impl<Tag, Iterators...>& operator++(alternated_iterator_impl<Tag, Iterators...>& it) {
+		std::visit([](auto&& item){ ++item; }, it.its_[it.index_]);
+		it.index_ = (it.index_+1) % sizeof...(Iterators);
+		return it;
+	}
+	template<typename Tag, typename ...Iterators>
+	alternated_iterator_impl<Tag, Iterators...> operator++(alternated_iterator_impl<Tag, Iterators...>& it, int) {
+		auto copy = it;
+		++copy;
+		return it;
+	}
+	template<typename Tag, typename ...Iterators>
+	alternated_iterator_impl<Tag, Iterators...>& operator--(alternated_iterator_impl<Tag, Iterators...>& it) {
+		// decreasing a 0 index would wrap to SIZE_MAX so we wrap to sizeof(Iterators) instead
+		if (it.index_ == 0)
+			it.index_ = sizeof...(Iterators)-1;
+		else
+			--it.index_;
+		std::visit([](auto&& item){ --item; }, it.its_[it.index_]);
+		return it;
+	}
+	template<typename Tag, typename ...Iterators>
+	alternated_iterator_impl<Tag, Iterators...> operator--(alternated_iterator_impl<Tag, Iterators...>& it, int) {
+		auto copy = it;
+		--copy;
+		return it;
+	}
+	template<typename Tag, typename ...Iterators>
+	alternated_iterator_impl<Tag, Iterators...>&
+	operator+=(alternated_iterator_impl<Tag, Iterators...>& it, typename alternated_iterator_impl<Tag, Iterators...>::difference_type n) {
+		while (n) {
+			auto x = (n + sizeof...(Iterators)-1) / sizeof...(Iterators);
+			std::visit([x](auto&& item){ item += x; }, it.its_[it.index_]);
+			n -= x;
+			it.index_ = (it.index_+1) % sizeof...(Iterators);
+		}
+		return it;
+	}
+	template<typename Tag, typename ...Iterators>
+	alternated_iterator_impl<Tag, Iterators...>
+	operator+(alternated_iterator_impl<Tag, Iterators...>& it, typename alternated_iterator_impl<Tag, Iterators...>::difference_type n) {
+		auto copy = it;
+		return copy += it;
+	}
+} // namespace detail
 template<typename ...Iterators>
 class alternated_iterator {
 public:
