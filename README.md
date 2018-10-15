@@ -46,17 +46,3 @@ for (auto& x : strided_range(vec1, 1, 2)) {
 }
 ```
 
-### ref\_range
-Takes multiple lvalue references of the same type as arguments and returns an iterator that will yield them back in order
-```cpp
-std::vector<int> vec1 {1,2,3};
-std::vector<int> vec2 {10, 20, 30};
-std::vector<int> vec3 {1, 1, 1};
-for (auto& v : ref_range(vec1, vec2, vec3)) {
-  // x is a reference to either vec1, vec2 or vec3
-  // iteration | x
-  // 1         | vec1
-  // 2         | vec2
-  // 3         | vec3
-}
-```
