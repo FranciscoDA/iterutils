@@ -148,29 +148,23 @@ cycle_iterator<typename Iterable::iterator> cycle_end(Iterable& iterable) {
 	return cycle_iterator<typename Iterable::iterator>(std::begin(iterable), std::end(iterable), std::end(iterable));
 }
 
-namespace detail {
-	template<typename Iterable>
-	class cycle_range_impl {
-	public:
-		using iterator = cycle_iterator<typename std::remove_reference_t<Iterable>::iterator>;
-		using value_type = typename iterator::value_type;
-		using pointer = typename iterator::pointer;
-		using reference = typename iterator::reference;
-
-		cycle_range_impl(std::add_rvalue_reference_t<Iterable> iterable) : iterable_(iterable) {
-		}
-		iterator begin() { return cycle_begin(iterable_); }
-		iterator end() { return cycle_end(iterable_); }
-		std::size_t size() const { return std::numeric_limits<std::size_t>::max(); }
-	private:
-		Iterable iterable_;
-	};
-} // namespace detail
-
 template<typename Iterable>
-auto cycle_range(Iterable&& iterable) {
-	return detail::cycle_range_impl<Iterable>(std::forward<Iterable>(iterable));
-}
+class cycle_range {
+public:
+	using iterator = cycle_iterator<typename std::remove_reference_t<Iterable>::iterator>;
+	using value_type = typename iterator::value_type;
+	using pointer = typename iterator::pointer;
+	using reference = typename iterator::reference;
+
+	cycle_range(Iterable&& iterable) : iterable_(std::forward<Iterable>(iterable)) {
+	}
+	iterator begin() { return cycle_begin(iterable_); }
+	iterator end() { return cycle_end(iterable_); }
+	std::size_t size() const { return std::numeric_limits<std::size_t>::max(); }
+private:
+	Iterable iterable_;
+};
+template<typename Iterable> cycle_range(Iterable&&) -> cycle_range<Iterable>;
 
 } // namespace iterutils
 

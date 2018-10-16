@@ -5,6 +5,7 @@
 #include "../cycle_range.h"
 #include "../ncycle_range.h"
 #include "../alternated_range.h"
+#include "../series_range.h"
 
 #include <iostream>
 #include <vector>

@@ -91,6 +91,8 @@ namespace detail {
 		chained_iterator_impl(const chained_iterator_impl& other) = delete;
 		chained_iterator_impl() = delete;
 
+		friend chained_iterator_impl& operator++<iterator_category, Iterators...>(chained_iterator_impl&);
+
 		reference operator*() const {
 			return *std::visit([](auto&& it) { return it; }, pos_[index_]);
 		}
@@ -101,7 +103,6 @@ namespace detail {
 			return pos_[index_] == other.pos_[other.index_];
 		}
 
-		friend chained_iterator_impl& operator++<iterator_category, Iterators...>(chained_iterator_impl&);
 	protected:
 		using element_type = std::variant<Iterators...>;
 		std::array<element_type, sizeof...(Iterators)> pos_;
@@ -126,7 +127,7 @@ namespace detail {
 		// inherited operators
 		friend chained_iterator_impl& operator++<iterator_category, Iterators...>(chained_iterator_impl&);
 		// forward iterator operators
-		friend chained_iterator_impl operator++<iterator_category, Iterators...>(chained_iterator_impl&, int);
+		friend chained_iterator_impl  operator++<iterator_category, Iterators...>(chained_iterator_impl&, int);
 	};
 	template<typename ...Iterators>
 	class chained_iterator_impl<std::bidirectional_iterator_tag, Iterators...> : public chained_iterator_impl<std::forward_iterator_tag, Iterators...> {
@@ -150,10 +151,10 @@ namespace detail {
 
 		// inherited operators
 		friend chained_iterator_impl& operator++<iterator_category, Iterators...>(chained_iterator_impl&);
-		friend chained_iterator_impl operator++<iterator_category, Iterators...>(chained_iterator_impl&, int);
+		friend chained_iterator_impl  operator++<iterator_category, Iterators...>(chained_iterator_impl&, int);
 		// bidirectional iterator operators
 		friend chained_iterator_impl& operator--<iterator_category, Iterators...>(chained_iterator_impl&);
-		friend chained_iterator_impl operator--<iterator_category, Iterators...>(chained_iterator_impl&, int);
+		friend chained_iterator_impl  operator--<iterator_category, Iterators...>(chained_iterator_impl&, int);
 	protected:
 		std::array<
 			typename chained_iterator_impl<std::forward_iterator_tag, Iterators...>::element_type,
@@ -173,14 +174,14 @@ namespace detail {
 
 		// inherited operators
 		friend chained_iterator_impl& operator++<iterator_category, Iterators...>(chained_iterator_impl&);
-		friend chained_iterator_impl operator++<iterator_category, Iterators...>(chained_iterator_impl&, int);
+		friend chained_iterator_impl  operator++<iterator_category, Iterators...>(chained_iterator_impl&, int);
 		friend chained_iterator_impl& operator--<iterator_category, Iterators...>(chained_iterator_impl&);
-		friend chained_iterator_impl operator--<iterator_category, Iterators...>(chained_iterator_impl&, int);
+		friend chained_iterator_impl  operator--<iterator_category, Iterators...>(chained_iterator_impl&, int);
 		// random access iterator operators
 		friend chained_iterator_impl& operator+=<iterator_category, Iterators...>(chained_iterator_impl&, difference_type);
-		friend chained_iterator_impl operator+<iterator_category, Iterators...>(const chained_iterator_impl&, difference_type);
+		friend chained_iterator_impl  operator+ <iterator_category, Iterators...>(const chained_iterator_impl&, difference_type);
 		friend chained_iterator_impl& operator-=<iterator_category, Iterators...>(chained_iterator_impl&, difference_type);
-		friend chained_iterator_impl operator-<iterator_category, Iterators...>(const chained_iterator_impl&, difference_type);
+		friend chained_iterator_impl  operator- <iterator_category, Iterators...>(const chained_iterator_impl&, difference_type);
 
 		bool operator<(const chained_iterator_impl& other) const {
 			return (this->index_ < other.index_) or (this->index_ == other.index_ and this->pos_[this->index_] < other.pos_[other.index_]);

@@ -140,7 +140,7 @@ namespace detail {
 		alternated_iterator_impl() = default;
 
 		friend alternated_iterator_impl& operator++<iterator_category, Iterators...>(alternated_iterator_impl&);
-		friend alternated_iterator_impl operator++<iterator_category, Iterators...>(alternated_iterator_impl&, int);
+		friend alternated_iterator_impl  operator++<iterator_category, Iterators...>(alternated_iterator_impl&, int);
 
 	protected:
 	};
@@ -156,9 +156,9 @@ namespace detail {
 		using alternated_iterator_impl<std::forward_iterator_tag, Iterators...>::alternated_iterator_impl;
 
 		friend alternated_iterator_impl& operator++<iterator_category, Iterators...>(alternated_iterator_impl&);
-		friend alternated_iterator_impl operator++<iterator_category, Iterators...>(alternated_iterator_impl&, int);
+		friend alternated_iterator_impl  operator++<iterator_category, Iterators...>(alternated_iterator_impl&, int);
 		friend alternated_iterator_impl& operator--<iterator_category, Iterators...>(alternated_iterator_impl&);
-		friend alternated_iterator_impl operator--<iterator_category, Iterators...>(alternated_iterator_impl&, int);
+		friend alternated_iterator_impl  operator--<iterator_category, Iterators...>(alternated_iterator_impl&, int);
 
 	protected:
 	};
@@ -174,13 +174,13 @@ namespace detail {
 		using alternated_iterator_impl<std::bidirectional_iterator_tag, Iterators...>::alternated_iterator_impl;
 
 		friend alternated_iterator_impl& operator++<iterator_category, Iterators...>(alternated_iterator_impl&);
-		friend alternated_iterator_impl operator++<iterator_category, Iterators...>(alternated_iterator_impl&, int);
+		friend alternated_iterator_impl  operator++<iterator_category, Iterators...>(alternated_iterator_impl&, int);
 		friend alternated_iterator_impl& operator--<iterator_category, Iterators...>(alternated_iterator_impl&);
-		friend alternated_iterator_impl operator--<iterator_category, Iterators...>(alternated_iterator_impl&, int);
+		friend alternated_iterator_impl  operator--<iterator_category, Iterators...>(alternated_iterator_impl&, int);
 		friend alternated_iterator_impl& operator+=<iterator_category, Iterators...>(alternated_iterator_impl&, difference_type);
-		friend alternated_iterator_impl operator+<iterator_category, Iterators...>(const alternated_iterator_impl&, difference_type);
+		friend alternated_iterator_impl  operator+ <iterator_category, Iterators...>(const alternated_iterator_impl&, difference_type);
 		friend alternated_iterator_impl& operator-=<iterator_category, Iterators...>(alternated_iterator_impl&, difference_type);
-		friend alternated_iterator_impl operator-<iterator_category, Iterators...>(const alternated_iterator_impl&, difference_type);
+		friend alternated_iterator_impl  operator- <iterator_category, Iterators...>(const alternated_iterator_impl&, difference_type);
 
 		// TODO: add relational operators <, <=, >, >=
 	protected:
@@ -190,7 +190,7 @@ namespace detail {
 
 template<typename ...Iterators>
 using alternated_iterator = detail::alternated_iterator_impl<
-	std::common_type_t<typename Iterators::iterator_category...>,
+	std::common_type_t<typename Iterators::iterator_category...>, // resolves to the worst iterator tag supported
 	Iterators...
 >;
 

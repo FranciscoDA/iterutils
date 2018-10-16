@@ -162,30 +162,24 @@ ncycle_iterator<typename Iterable::iterator> ncycle_end(Iterable& iterable) {
 	return ncycle_iterator<typename Iterable::iterator>(std::begin(iterable), std::end(iterable), std::end(iterable), 0);
 }
 
-namespace detail {
-	template<typename Iterable>
-	class ncycle_range_impl {
-	public:
-		using iterator = ncycle_iterator<typename std::remove_reference_t<Iterable>::iterator>;
-		using value_type = typename iterator::value_type;
-		using pointer = typename iterator::pointer;
-		using reference = typename iterator::reference;
-
-		ncycle_range_impl(std::add_rvalue_reference_t<Iterable> iterable, std::size_t n) : iterable_(iterable), n_(n) {
-		}
-		iterator begin() { return ncycle_begin(iterable_, n_); }
-		iterator end() { return ncycle_end(iterable_); }
-		std::size_t size() const { return iterable_.size()*n_; }
-	private:
-		Iterable iterable_;
-		std::size_t n_;
-	};
-} // namespace detail
-
 template<typename Iterable>
-auto ncycle_range(Iterable&& iterable, std::size_t n) {
-	return detail::ncycle_range_impl<Iterable>(std::forward<Iterable>(iterable), n);
-}
+class ncycle_range {
+public:
+	using iterator = ncycle_iterator<typename std::remove_reference_t<Iterable>::iterator>;
+	using value_type = typename iterator::value_type;
+	using pointer = typename iterator::pointer;
+	using reference = typename iterator::reference;
+
+	ncycle_range(Iterable&& iterable, std::size_t n) : iterable_(std::forward<Iterable>(iterable)), n_(n) {
+	}
+	iterator begin() { return ncycle_begin(iterable_, n_); }
+	iterator end() { return ncycle_end(iterable_); }
+	std::size_t size() const { return iterable_.size()*n_; }
+private:
+	Iterable iterable_;
+	std::size_t n_;
+};
+template<typename Iterable> ncycle_range(Iterable&& iterable, std::size_t) -> ncycle_range<Iterable>;
 
 } // namespace iterutils
 
