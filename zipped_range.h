@@ -15,7 +15,7 @@ namespace detail {
 		return it;
 	}
 	template<typename Tag, typename ...Iterators>
-	zipped_iterator_impl<Tag, Iterators...>& operator++(zipped_iterator_impl<Tag, Iterators...>& it, int) {
+	zipped_iterator_impl<Tag, Iterators...> operator++(zipped_iterator_impl<Tag, Iterators...>& it, int) {
 		auto copy = it;
 		it._suffix_inc(std::index_sequence_for<Iterators...>());
 		return copy;
@@ -26,7 +26,7 @@ namespace detail {
 		return it;
 	}
 	template<typename Tag, typename ...Iterators>
-	zipped_iterator_impl<Tag, Iterators...>& operator--(zipped_iterator_impl<Tag, Iterators...>& it, int) {
+	zipped_iterator_impl<Tag, Iterators...> operator--(zipped_iterator_impl<Tag, Iterators...>& it, int) {
 		auto copy = it;
 		it._suffix_dec(std::index_sequence_for<Iterators...>());
 		return copy;
@@ -130,7 +130,7 @@ namespace detail {
 		// methods copied over from base iterators
 		friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&);
 		// forward iterator operators
-		friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&, int);
+		friend zipped_iterator_impl operator++<iterator_category, Iterators...>(zipped_iterator_impl&, int);
 	protected:
 		template<std::size_t ...I>
 		void _suffix_inc(std::index_sequence<I...>) {
@@ -150,10 +150,10 @@ namespace detail {
 		using zipped_iterator_impl<std::forward_iterator_tag, Iterators...>::zipped_iterator_impl;
 		// methods copied over from base iterators
 		friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&);
-		friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&, int);
+		friend zipped_iterator_impl operator++<iterator_category, Iterators...>(zipped_iterator_impl&, int);
 		// bidirectional iterator operators
 		friend zipped_iterator_impl& operator--<iterator_category, Iterators...>(zipped_iterator_impl&);
-		friend zipped_iterator_impl& operator--<iterator_category, Iterators...>(zipped_iterator_impl&, int);
+		friend zipped_iterator_impl operator--<iterator_category, Iterators...>(zipped_iterator_impl&, int);
 	protected:
 		// use a fold expression to decrement all the inner iterators
 		template<std::size_t ...I>
@@ -178,9 +178,9 @@ namespace detail {
 		using zipped_iterator_impl<std::bidirectional_iterator_tag, Iterators...>::zipped_iterator_impl;
 		// methods copied over from base iterators
 		friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&);
-		friend zipped_iterator_impl& operator++<iterator_category, Iterators...>(zipped_iterator_impl&, int);
+		friend zipped_iterator_impl operator++<iterator_category, Iterators...>(zipped_iterator_impl&, int);
 		friend zipped_iterator_impl& operator--<iterator_category, Iterators...>(zipped_iterator_impl&);
-		friend zipped_iterator_impl& operator--<iterator_category, Iterators...>(zipped_iterator_impl&, int);
+		friend zipped_iterator_impl operator--<iterator_category, Iterators...>(zipped_iterator_impl&, int);
 		// random access iterator operators
 		friend zipped_iterator_impl& operator+=<iterator_category, Iterators...>(zipped_iterator_impl&, difference_type);
 		friend zipped_iterator_impl operator+<iterator_category, Iterators...>(const zipped_iterator_impl&, difference_type);
@@ -217,7 +217,7 @@ using zipped_iterator = detail::zipped_iterator_impl<
 	std::common_type_t<typename Iterators::iterator_category...>, // resolves to the worst iterator tag supported
 	Iterators...
 >;
- 
+
 template<typename ...Iterables>
 zipped_iterator<typename Iterables::iterator...> zipped_begin(Iterables&... args) {
 	return zipped_iterator<typename Iterables::iterator...>(std::begin(args)...);
@@ -238,43 +238,33 @@ zipped_iterator<typename Iterables::const_iterator...> zipped_cend(const Iterabl
 	return zipped_iterator<typename Iterables::const_iterator...>(std::cend(args)...);
 }
 
-namespace detail {
-	template<typename ...Iterables>
-	class zipped_range_impl {
-	public:
-		using iterator = zipped_iterator<typename std::remove_reference_t<Iterables>::iterator...>;
-		using value_type = typename iterator::value_type;
-		using pointer = typename iterator::pointer;
-		using reference = typename iterator::reference;
-
-		zipped_range_impl (std::add_rvalue_reference_t<Iterables>... iterables)
-			: t(std::forward<Iterables>(iterables)...) {
-		}
-		iterator begin() { return std::apply(zipped_begin<std::remove_reference_t<Iterables>...>, t); }
-		iterator end() { return std::apply(zipped_end<std::remove_reference_t<Iterables>...>, t); }
-		std::size_t size() const { return _size<0>(); }
-	private:
-		template<std::size_t I>
-		std::size_t _size() const {
-			if constexpr (I < sizeof...(Iterables)-1) {
-				return std::min(std::get<I>(t).size(), _size<I+1>());
-			}
-			return std::get<I>(t).size();
-		}
-		// store references/copies of the iterables
-		// to make sure they stay valid during the lifetime
-		// of this object
-		std::tuple<Iterables...> t;
-	};
-} // namespace detail
-
-// need universal reference to determine whether to store
-// copies (in case arguments are rvalues) or references
-// (in case arguments are lvalues)
 template<typename ...Iterables>
-auto zipped_range(Iterables&&... iterables) {
-	return detail::zipped_range_impl<Iterables...>(std::forward<Iterables>(iterables)...);
-}
+class zipped_range {
+public:
+	using iterator = zipped_iterator<typename std::remove_reference_t<Iterables>::iterator...>;
+	using value_type = typename iterator::value_type;
+	using pointer = typename iterator::pointer;
+	using reference = typename iterator::reference;
+
+	zipped_range(Iterables&&... iterables)
+		: t(std::forward<Iterables>(iterables)...) {
+	}
+	iterator begin() { return std::apply(zipped_begin<std::remove_reference_t<Iterables>...>, t); }
+	iterator end() { return std::apply(zipped_end<std::remove_reference_t<Iterables>...>, t); }
+	std::size_t size() const { return _size<0>(); }
+private:
+	template<std::size_t I>
+	std::size_t _size() const {
+		if constexpr (I < sizeof...(Iterables)-1) {
+			return std::min(std::get<I>(t).size(), _size<I+1>());
+		}
+		return std::get<I>(t).size();
+	}
+	std::tuple<Iterables...> t;
+};
+template<typename ...Iterables>
+zipped_range(Iterables&&...) -> zipped_range<Iterables...>;
+
 
 } // namespace iterutils
 

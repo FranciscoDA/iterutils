@@ -181,6 +181,7 @@ namespace detail {
 		friend chained_iterator_impl operator+<iterator_category, Iterators...>(const chained_iterator_impl&, difference_type);
 		friend chained_iterator_impl& operator-=<iterator_category, Iterators...>(chained_iterator_impl&, difference_type);
 		friend chained_iterator_impl operator-<iterator_category, Iterators...>(const chained_iterator_impl&, difference_type);
+
 		bool operator<(const chained_iterator_impl& other) const {
 			return (this->index_ < other.index_) or (this->index_ == other.index_ and this->pos_[this->index_] < other.pos_[other.index_]);
 		}
@@ -197,7 +198,10 @@ namespace detail {
 } // namespace detail
 
 template<typename ...Iterators>
-using chained_iterator = detail::chained_iterator_impl<std::common_type_t<typename Iterators::iterator_category...>, Iterators...>;
+using chained_iterator = detail::chained_iterator_impl<
+	std::common_type_t<typename Iterators::iterator_category...>, // resolves to the worst iterator type supported
+	Iterators...
+>;
 
 template<typename ...Iterables>
 chained_iterator<typename Iterables::iterator...> chained_begin(Iterables&... iterables) {
@@ -208,34 +212,25 @@ chained_iterator<typename Iterables::iterator...> chained_end(Iterables&... iter
 	return chained_iterator<typename Iterables::iterator...>(std::end(iterables)..., std::end(iterables)..., sizeof...(Iterables));
 }
 
-namespace detail {
-	template<typename ...Iterables>
-	class chained_range_impl {
-	public:
-		using iterator = chained_iterator<typename std::remove_reference_t<Iterables>::iterator...>;
-		using value_type = typename iterator::value_type;
-		using reference = typename iterator::reference;
-		using pointer = typename iterator::pointer;
-		chained_range_impl (std::add_rvalue_reference_t<Iterables>... iterables)
-			: t(std::forward<Iterables>(iterables)...) {
-		}
-		iterator begin() { return std::apply(chained_begin<std::remove_reference_t<Iterables>...>, t); }
-		iterator end() { return std::apply(chained_end<std::remove_reference_t<Iterables>...>, t); }
-		std::size_t size() const { return _size(std::index_sequence_for<Iterables...>()); }
-	private:
-		template<std::size_t ...I>
-		std::size_t _size(std::index_sequence<I...>) const { return (std::get<I>(t) + ...); }
-		std::tuple<Iterables...> t;
-	};
-} // namespace detail
-
-// need universal reference to determine whether to store
-// copies (in case arguments are rvalues) or references
-// (in case arguments are lvalues)
 template<typename ...Iterables>
-auto chained_range(Iterables&&... iterables) {
-	return detail::chained_range_impl<Iterables...>(std::forward<Iterables>(iterables)...);
-}
+class chained_range {
+public:
+	using iterator = chained_iterator<typename std::remove_reference_t<Iterables>::iterator...>;
+	using value_type = typename iterator::value_type;
+	using reference = typename iterator::reference;
+	using pointer = typename iterator::pointer;
+	chained_range (Iterables&&... iterables) : t(std::forward<Iterables>(iterables)...) {
+	}
+	iterator begin() { return std::apply(chained_begin<std::remove_reference_t<Iterables>...>, t); }
+	iterator end() { return std::apply(chained_end<std::remove_reference_t<Iterables>...>, t); }
+	std::size_t size() const { return _size(std::index_sequence_for<Iterables...>()); }
+private:
+	template<std::size_t ...I>
+	std::size_t _size(std::index_sequence<I...>) const { return (std::get<I>(t) + ...); }
+	std::tuple<Iterables...> t;
+};
+template<typename ...Iterables>
+chained_range(Iterables&&...) -> chained_range<Iterables...>;
 
 } // namespace iterutils
 

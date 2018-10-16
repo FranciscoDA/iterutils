@@ -69,5 +69,14 @@ int main() {
 		std::cout << x.i << ",";
 	}
 	std::cout << std::endl;
+
+	std::cout << "Test 7: alternated range" << std::endl;
+	std::cout << "alternated(v1,v2) = ";
+	int i = 0;
+	for (auto& x : alternated_range(v1,v2)) {
+		std::cout << x.i << ",";
+		++i;
+	}
+	std::cout << std::endl;
 }
 
