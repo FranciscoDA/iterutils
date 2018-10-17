@@ -2,6 +2,7 @@
 #define _ITERUTILS_ZIPPED_RANGE_H_
 
 #include <tuple>
+#include <type_traits>
 #include "util.h"
 
 namespace iterutils {
@@ -249,20 +250,16 @@ public:
 	}
 	iterator begin() { return std::apply(zipped_begin<std::remove_reference_t<Iterables>...>, t); }
 	iterator end() { return std::apply(zipped_end<std::remove_reference_t<Iterables>...>, t); }
-	std::size_t size() const { return _size<0>(); }
+
+	std::enable_if_t<!is_infinite<zipped_range>::value, size_t>
+	size() const { return std::apply(shortest_iterable<Iterables...>, t); }
 private:
-	template<std::size_t I>
-	std::size_t _size() const {
-		if constexpr (I < sizeof...(Iterables)-1) {
-			return std::min(std::get<I>(t).size(), _size<I+1>());
-		}
-		return std::get<I>(t).size();
-	}
 	std::tuple<Iterables...> t;
 };
-template<typename ...Iterables>
-zipped_range(Iterables&&...) -> zipped_range<Iterables...>;
+template<typename ...Iterables> zipped_range(Iterables&&...) -> zipped_range<Iterables...>;
 
+template<typename ...T>
+struct is_infinite<zipped_range<T...>> : public std::conjunction<is_infinite<T>...> {};
 
 } // namespace iterutils
 

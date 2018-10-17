@@ -222,14 +222,19 @@ public:
 	}
 	iterator begin() { return std::apply(chained_begin<std::remove_reference_t<Iterables>...>, t); }
 	iterator end() { return std::apply(chained_end<std::remove_reference_t<Iterables>...>, t); }
-	std::size_t size() const { return _size(std::index_sequence_for<Iterables...>()); }
+
+	std::enable_if<!is_infinite<chained_range>::value, size_t>
+	size() const { return _size(std::index_sequence_for<Iterables...>()); }
 private:
 	template<std::size_t ...I>
-	std::size_t _size(std::index_sequence<I...>) const { return (std::get<I>(t) + ...); }
+	std::size_t _size(std::index_sequence<I...>) const { return (std::size(std::get<I>(t)) + ...); }
 	std::tuple<Iterables...> t;
 };
 template<typename ...Iterables>
 chained_range(Iterables&&...) -> chained_range<Iterables...>;
+
+template<typename ...T>
+struct is_infinite<chained_range<T...>> : public std::disjunction<is_infinite<T>...> {};
 
 } // namespace iterutils
 

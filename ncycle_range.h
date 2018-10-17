@@ -2,7 +2,7 @@
 #define _ITERUTILS_NCYCLE_RANGE_H_
 
 #include <iterator>
-#include <limits>
+#include <type_traits>
 #include "util.h"
 
 namespace iterutils {
@@ -171,12 +171,17 @@ public:
 	}
 	iterator begin() { return ncycle_begin(iterable_, n_); }
 	iterator end() { return ncycle_end(iterable_); }
-	std::size_t size() const { return iterable_.size()*n_; }
+
+	std::enable_if_t<!is_infinite<ncycle_range>::value, size_t>
+	size() const { return iterable_.size()*n_; }
 private:
 	Iterable iterable_;
 	std::size_t n_;
 };
 template<typename Iterable> ncycle_range(Iterable&& iterable, std::size_t) -> ncycle_range<Iterable>;
+
+template<typename T>
+struct is_infinite<ncycle_range<T>> : public is_infinite<T> {};
 
 } // namespace iterutils
 

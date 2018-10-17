@@ -6,9 +6,11 @@
 #include "../ncycle_range.h"
 #include "../alternated_range.h"
 #include "../series_range.h"
+#include "../repeat_range.h"
 
 #include <iostream>
 #include <vector>
+#include <sstream>
 
 using namespace iterutils;
 
@@ -77,6 +79,11 @@ int main() {
 	for (auto& x : alternated_range(v1,v2)) {
 		std::cout << x.i << ",";
 		++i;
+	}
+	std::cout << std::endl;
+
+	for (auto& e : alternated_range(std::array<std::string,4>{"hello", "world", "foo", "bar"}, repeat_range(std::string(".")))) {
+		std::cout << e;
 	}
 	std::cout << std::endl;
 }

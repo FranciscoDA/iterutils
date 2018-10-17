@@ -73,12 +73,8 @@ class series_range {
 public:
 	series_range(T start, T stop, T step) {
 	}
-	series_iterator<T> begin() const {
-		return series_iterator<T>(start, step);
-	}
-	series_iterator<T> end() const {
-		return begin() + (stop-start+1) / step;
-	}
+	series_iterator<T> begin() const { return {start, step}; }
+	series_iterator<T> end()   const { return begin() + (stop-start+1) / step; }
 private:
 	T start, stop, step;
 };

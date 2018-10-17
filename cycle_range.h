@@ -2,7 +2,6 @@
 #define _ITERUTILS_CYCLE_RANGE_H_
 
 #include <iterator>
-#include <limits>
 #include "util.h"
 
 namespace iterutils {
@@ -158,11 +157,13 @@ public:
 	}
 	iterator begin() { return cycle_begin(iterable_); }
 	iterator end() { return cycle_end(iterable_); }
-	std::size_t size() const { return std::numeric_limits<std::size_t>::max(); }
 private:
 	Iterable iterable_;
 };
 template<typename Iterable> cycle_range(Iterable&&) -> cycle_range<Iterable>;
+
+template<typename ...T>
+struct is_infinite<cycle_range<T...>> : public std::true_type {};
 
 } // namespace iterutils
 
