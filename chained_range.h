@@ -73,10 +73,10 @@ operator-(const chained_iterator<Tag, Iterators...>& it, typename chained_iterat
 template<typename ...Iterators>
 class chained_iterator<std::input_iterator_tag, Iterators...> {
 public:
-	using value_type = std::common_type_t<typename Iterators::value_type...>;
-	using reference = std::add_lvalue_reference_t<value_type>;
-	using pointer = std::add_pointer_t<value_type>;
-	using difference_type = std::common_type_t<typename Iterators::difference_type...>;
+	using value_type        = std::common_type_t<typename std::iterator_traits<Iterators>::value_type...>;
+	using reference         = std::add_lvalue_reference_t<value_type>;
+	using pointer           = std::add_pointer_t<value_type>;
+	using difference_type   = std::common_type_t<typename std::iterator_traits<Iterators>::difference_type...>;
 	using iterator_category = std::input_iterator_tag;
 
 	template<std::size_t ...I>
@@ -109,13 +109,11 @@ protected:
 	std::array<element_type, sizeof...(Iterators)> ends_;
 	std::size_t index_;
 };
+
 template<typename ...Iterators>
-class chained_iterator<std::forward_iterator_tag, Iterators...> : public chained_iterator<std::input_iterator_tag, Iterators...> {
+class chained_iterator<std::forward_iterator_tag, Iterators...>
+: public chained_iterator<std::input_iterator_tag, Iterators...> {
 public:
-	using value_type = typename chained_iterator<std::input_iterator_tag, Iterators...>::value_type;
-	using reference = typename chained_iterator<std::input_iterator_tag, Iterators...>::reference;
-	using pointer = typename chained_iterator<std::input_iterator_tag, Iterators...>::pointer;
-	using difference_type = typename chained_iterator<std::input_iterator_tag, Iterators...>::difference_type;
 	using iterator_category = std::forward_iterator_tag;
 
 	chained_iterator(Iterators... pos, Iterators... ends, std::size_t index=0)
@@ -129,13 +127,11 @@ public:
 	// forward iterator operators
 	friend chained_iterator  operator++<iterator_category, Iterators...>(chained_iterator&, int);
 };
+
 template<typename ...Iterators>
-class chained_iterator<std::bidirectional_iterator_tag, Iterators...> : public chained_iterator<std::forward_iterator_tag, Iterators...> {
+class chained_iterator<std::bidirectional_iterator_tag, Iterators...>
+: public chained_iterator<std::forward_iterator_tag, Iterators...> {
 public:
-	using value_type = typename chained_iterator<std::forward_iterator_tag, Iterators...>::value_type;
-	using reference = typename chained_iterator<std::forward_iterator_tag, Iterators...>::reference;
-	using pointer = typename chained_iterator<std::forward_iterator_tag, Iterators...>::pointer;
-	using difference_type = typename chained_iterator<std::forward_iterator_tag, Iterators...>::difference_type;
 	using iterator_category = std::bidirectional_iterator_tag;
 
 	template<std::size_t ...I>
@@ -161,12 +157,11 @@ protected:
 		sizeof...(Iterators)
 	> begins_;
 };
+
 template<typename ...Iterators>
-class chained_iterator<std::random_access_iterator_tag, Iterators...> : public chained_iterator<std::bidirectional_iterator_tag, Iterators...> {
+class chained_iterator<std::random_access_iterator_tag, Iterators...>
+: public chained_iterator<std::bidirectional_iterator_tag, Iterators...> {
 public:
-	using value_type = typename chained_iterator<std::bidirectional_iterator_tag, Iterators...>::value_type;
-	using reference = typename chained_iterator<std::bidirectional_iterator_tag, Iterators...>::reference;
-	using pointer = typename chained_iterator<std::bidirectional_iterator_tag, Iterators...>::pointer;
 	using difference_type = typename chained_iterator<std::bidirectional_iterator_tag, Iterators...>::difference_type;
 	using iterator_category = std::random_access_iterator_tag;
 

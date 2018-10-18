@@ -69,11 +69,11 @@ operator-(const cycle_iterator<Tag, Iterator>& it, typename cycle_iterator<Tag, 
 template<typename Iterator>
 class cycle_iterator<std::forward_iterator_tag, Iterator> {
 public:
+	using value_type        = typename std::iterator_traits<Iterator>::value_type;
+	using reference         = std::add_lvalue_reference_t<value_type>;
+	using pointer           = std::add_pointer_t<value_type>;
+	using difference_type   = typename std::iterator_traits<Iterator>::difference_type;
 	using iterator_category = std::forward_iterator_tag;
-	using value_type = typename Iterator::value_type;
-	using reference = typename Iterator::reference;
-	using pointer = typename Iterator::pointer;
-	using difference_type = typename Iterator::difference_type;
 
 	cycle_iterator(const cycle_iterator& other) = default;
 	cycle_iterator() = default;
@@ -91,14 +91,12 @@ protected:
 	Iterator end_;
 	Iterator it_;
 };
+
 template<typename Iterator>
-class cycle_iterator<std::bidirectional_iterator_tag, Iterator> : public cycle_iterator<std::forward_iterator_tag, Iterator> {
+class cycle_iterator<std::bidirectional_iterator_tag, Iterator>
+: public cycle_iterator<std::forward_iterator_tag, Iterator> {
 public:
 	using iterator_category = std::bidirectional_iterator_tag;
-	using value_type = typename Iterator::value_type;
-	using reference = typename Iterator::reference;
-	using pointer = typename Iterator::pointer;
-	using difference_type = typename Iterator::difference_type;
 
 	using cycle_iterator<std::forward_iterator_tag, Iterator>::cycle_iterator;
 
@@ -107,14 +105,13 @@ public:
 	friend cycle_iterator& operator--<iterator_category, Iterator>(cycle_iterator&);
 	friend cycle_iterator  operator--<iterator_category, Iterator>(cycle_iterator&, int);
 };
+
 template<typename Iterator>
-class cycle_iterator<std::random_access_iterator_tag, Iterator> : public cycle_iterator<std::bidirectional_iterator_tag, Iterator> {
+class cycle_iterator<std::random_access_iterator_tag, Iterator>
+: public cycle_iterator<std::bidirectional_iterator_tag, Iterator> {
 public:
+	using difference_type   = typename cycle_iterator<std::bidirectional_iterator_tag, Iterator>::difference_type;
 	using iterator_category = std::random_access_iterator_tag;
-	using value_type = typename Iterator::value_type;
-	using reference = typename Iterator::reference;
-	using pointer = typename Iterator::pointer;
-	using difference_type = typename Iterator::difference_type;
 
 	using cycle_iterator<std::bidirectional_iterator_tag, Iterator>::cycle_iterator;
 
@@ -155,8 +152,12 @@ public:
 
 	cycle_range(Iterable&& iterable) : iterable_(std::forward<Iterable>(iterable)) {
 	}
-	iterator begin() { return cycle_begin(iterable_); }
-	iterator end() { return cycle_end(iterable_); }
+	iterator begin() {
+		return cycle_begin(iterable_);
+	}
+	iterator end() {
+		return cycle_end(iterable_);
+	}
 private:
 	Iterable iterable_;
 };

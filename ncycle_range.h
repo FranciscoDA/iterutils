@@ -76,11 +76,11 @@ operator-(const ncycle_iterator<Tag, Iterator>& it, typename ncycle_iterator<Tag
 template<typename Iterator>
 class ncycle_iterator<std::forward_iterator_tag, Iterator> {
 public:
+	using value_type        = typename std::iterator_traits<Iterator>::value_type;
+	using reference         = std::add_lvalue_reference_t<value_type>;
+	using pointer           = std::add_pointer_t<value_type>;
+	using difference_type   = typename std::iterator_traits<Iterator>::difference_type;
 	using iterator_category = std::forward_iterator_tag;
-	using value_type = typename Iterator::value_type;
-	using reference = typename Iterator::reference;
-	using pointer = typename Iterator::pointer;
-	using difference_type = typename Iterator::difference_type;
 
 	ncycle_iterator(const ncycle_iterator& other) = default;
 	ncycle_iterator() = default;
@@ -91,21 +91,19 @@ public:
 	bool operator!=(const ncycle_iterator& other) const { return n_ != other.n_ or it_ != other.it_; }
 
 	friend ncycle_iterator& operator++<std::forward_iterator_tag, Iterator>(ncycle_iterator&);
-	friend ncycle_iterator operator++<std::forward_iterator_tag, Iterator>(ncycle_iterator&, int);
+	friend ncycle_iterator  operator++<std::forward_iterator_tag, Iterator>(ncycle_iterator&, int);
 protected:
 	Iterator begin_;
 	Iterator end_;
 	Iterator it_;
 	std::size_t n_;
 };
+
 template<typename Iterator>
-class ncycle_iterator<std::bidirectional_iterator_tag, Iterator> : public ncycle_iterator<std::forward_iterator_tag, Iterator> {
+class ncycle_iterator<std::bidirectional_iterator_tag, Iterator>
+: public ncycle_iterator<std::forward_iterator_tag, Iterator> {
 public:
 	using iterator_category = std::bidirectional_iterator_tag;
-	using value_type = typename Iterator::value_type;
-	using reference = typename Iterator::reference;
-	using pointer = typename Iterator::pointer;
-	using difference_type = typename Iterator::difference_type;
 
 	using ncycle_iterator<std::forward_iterator_tag, Iterator>::ncycle_iterator;
 
@@ -114,14 +112,13 @@ public:
 	friend ncycle_iterator& operator--<iterator_category, Iterator>(ncycle_iterator&);
 	friend ncycle_iterator  operator--<iterator_category, Iterator>(ncycle_iterator&, int);
 };
+
 template<typename Iterator>
-class ncycle_iterator<std::random_access_iterator_tag, Iterator> : public ncycle_iterator<std::bidirectional_iterator_tag, Iterator> {
+class ncycle_iterator<std::random_access_iterator_tag, Iterator>
+: public ncycle_iterator<std::bidirectional_iterator_tag, Iterator> {
 public:
+	using difference_type = typename ncycle_iterator<std::bidirectional_iterator_tag, Iterator>::difference_type;
 	using iterator_category = std::random_access_iterator_tag;
-	using value_type = typename Iterator::value_type;
-	using reference = typename Iterator::reference;
-	using pointer = typename Iterator::pointer;
-	using difference_type = typename Iterator::difference_type;
 
 	using ncycle_iterator<std::bidirectional_iterator_tag, Iterator>::ncycle_iterator;
 

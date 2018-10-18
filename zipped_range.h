@@ -62,17 +62,15 @@ operator-(const zipped_iterator<Tag, Iterators...>& it, typename zipped_iterator
 template<typename ...Iterators>
 class zipped_iterator<std::input_iterator_tag, Iterators...> {
 public:
-	using value_type = std::tuple<typename Iterators::value_type...>;
-	using pointer = std::tuple<typename Iterators::pointer...>;
-	using reference = std::tuple<typename Iterators::reference...>;
-	using difference_type = std::common_type_t<typename Iterators::difference_type...>;
+	using value_type        = std::tuple<typename std::iterator_traits<Iterators>::value_type...>;
+	using reference         = std::tuple<typename std::iterator_traits<Iterators>::reference...>;
+	using pointer           = std::tuple<typename std::iterator_traits<Iterators>::pointer...>;
+	using difference_type   = std::common_type_t<typename std::iterator_traits<Iterators>::difference_type...>;
 	using iterator_category = std::input_iterator_tag;
 
 	zipped_iterator(Iterators... args) : t(args...) {
 	}
-	// some iterators are non-copyable so the zipped iterator is not copyable either
 	zipped_iterator(const zipped_iterator& other) = delete;
-	// some iterators are not default constructible so the zipped iterator is not default constructible either
 	zipped_iterator() = delete;
 
 	// input iterator operators
@@ -93,13 +91,11 @@ public:
 protected:
 	std::tuple<Iterators...> t;
 
-	// use a fold expression to increment all the inner iterators
 	template<std::size_t ...I>
 	void _prefix_inc(std::index_sequence<I...>) {
 		(... , ++std::get<I>(t));
 	}
 
-	// return a tuple of item references when dereferencing the iterator
 	template<std::size_t ...I>
 	reference _deref(std::index_sequence<I...>) const {
 		return reference(*std::get<I>(t)...);
@@ -109,17 +105,14 @@ protected:
 	// this ensures that iteration will stop on the shortest range
 	template<std::size_t ...I>
 	bool _logical_neq(const zipped_iterator& other, std::index_sequence<I...>) const {
-		return (... && (std::get<I>(t)!=std::get<I>(other.t)));
+		return (... && (std::get<I>(t) != std::get<I>(other.t)));
 	}
 };
 
 template<typename ...Iterators>
-class zipped_iterator<std::forward_iterator_tag, Iterators...> : public zipped_iterator<std::input_iterator_tag, Iterators...> {
+class zipped_iterator<std::forward_iterator_tag, Iterators...>
+: public zipped_iterator<std::input_iterator_tag, Iterators...> {
 public:
-	using value_type = typename zipped_iterator<std::input_iterator_tag, Iterators...>::value_type;
-	using reference = typename zipped_iterator<std::input_iterator_tag, Iterators...>::reference;
-	using pointer = typename zipped_iterator<std::input_iterator_tag, Iterators...>::pointer;
-	using difference_type = typename zipped_iterator<std::input_iterator_tag, Iterators...>::difference_type;
 	using iterator_category = std::forward_iterator_tag;
 
 	zipped_iterator(Iterators... args) : zipped_iterator<std::input_iterator_tag, Iterators...>(args...) {
@@ -140,12 +133,9 @@ protected:
 };
 
 template<typename ...Iterators>
-class zipped_iterator<std::bidirectional_iterator_tag, Iterators...> : public zipped_iterator<std::forward_iterator_tag, Iterators...> {
+class zipped_iterator<std::bidirectional_iterator_tag, Iterators...>
+: public zipped_iterator<std::forward_iterator_tag, Iterators...> {
 public:
-	using value_type = typename zipped_iterator<std::input_iterator_tag, Iterators...>::value_type;
-	using reference = typename zipped_iterator<std::input_iterator_tag, Iterators...>::reference;
-	using pointer = typename zipped_iterator<std::input_iterator_tag, Iterators...>::pointer;
-	using difference_type = typename zipped_iterator<std::input_iterator_tag, Iterators...>::difference_type;
 	using iterator_category = std::bidirectional_iterator_tag;
 
 	using zipped_iterator<std::forward_iterator_tag, Iterators...>::zipped_iterator;
@@ -168,25 +158,23 @@ protected:
 };
 
 template<typename ...Iterators>
-class zipped_iterator<std::random_access_iterator_tag, Iterators...> : public zipped_iterator<std::bidirectional_iterator_tag, Iterators...> {
+class zipped_iterator<std::random_access_iterator_tag, Iterators...>
+: public zipped_iterator<std::bidirectional_iterator_tag, Iterators...> {
 public:
-	using value_type = typename zipped_iterator<std::input_iterator_tag, Iterators...>::value_type;
-	using reference = typename zipped_iterator<std::input_iterator_tag, Iterators...>::reference;
-	using pointer = typename zipped_iterator<std::input_iterator_tag, Iterators...>::pointer;
-	using difference_type = typename zipped_iterator<std::input_iterator_tag, Iterators...>::difference_type;
+	using difference_type = typename zipped_iterator<std::bidirectional_iterator_tag, Iterators...>::difference_type;
 	using iterator_category = std::random_access_iterator_tag;
 
 	using zipped_iterator<std::bidirectional_iterator_tag, Iterators...>::zipped_iterator;
 	// methods copied over from base iterators
 	friend zipped_iterator& operator++<iterator_category, Iterators...>(zipped_iterator&);
-	friend zipped_iterator operator++<iterator_category, Iterators...>(zipped_iterator&, int);
+	friend zipped_iterator  operator++<iterator_category, Iterators...>(zipped_iterator&, int);
 	friend zipped_iterator& operator--<iterator_category, Iterators...>(zipped_iterator&);
-	friend zipped_iterator operator--<iterator_category, Iterators...>(zipped_iterator&, int);
+	friend zipped_iterator  operator--<iterator_category, Iterators...>(zipped_iterator&, int);
 	// random access iterator operators
-	friend zipped_iterator& operator+=<iterator_category, Iterators...>(zipped_iterator&, difference_type);
-	friend zipped_iterator operator+<iterator_category, Iterators...>(const zipped_iterator&, difference_type);
-	friend zipped_iterator& operator-=<iterator_category, Iterators...>(zipped_iterator&, difference_type);
-	friend zipped_iterator operator-<iterator_category, Iterators...>(const zipped_iterator&, difference_type);
+	friend zipped_iterator& operator+=<iterator_category, Iterators...>(zipped_iterator&,       difference_type);
+	friend zipped_iterator  operator+<iterator_category, Iterators...> (const zipped_iterator&, difference_type);
+	friend zipped_iterator& operator-=<iterator_category, Iterators...>(zipped_iterator&,       difference_type);
+	friend zipped_iterator  operator-<iterator_category, Iterators...> (const zipped_iterator&, difference_type);
 
 	bool operator<(const zipped_iterator& other) const {
 		return this->t < other.t;
@@ -210,6 +198,7 @@ protected:
 		(... , (std::get<I>(this->t)-=n));
 	}
 };
+
 template<typename ...Iterators>
 zipped_iterator(Iterators...) -> zipped_iterator<std::common_type_t<typename Iterators::iterator_category...>, Iterators...>;
 
@@ -240,19 +229,23 @@ zipped_cend(const Iterables&... args) {
 template<typename ...Iterables>
 class zipped_range {
 public:
-	using iterator = detail::specialize_iterator_from_iterables<zipped_iterator, Iterables...>;
+	using iterator   = detail::specialize_iterator_from_iterables<zipped_iterator, Iterables...>;
 	using value_type = typename iterator::value_type;
-	using pointer = typename iterator::pointer;
-	using reference = typename iterator::reference;
+	using pointer    = typename iterator::pointer;
+	using reference  = typename iterator::reference;
 
-	zipped_range(Iterables&&... iterables)
-		: t(std::forward<Iterables>(iterables)...) {
+	zipped_range(Iterables&&... iterables) : t(std::forward<Iterables>(iterables)...) {
 	}
-	iterator begin() { return std::apply(zipped_begin<std::remove_reference_t<Iterables>...>, t); }
-	iterator end() { return std::apply(zipped_end<std::remove_reference_t<Iterables>...>, t); }
+	iterator begin() {
+		return std::apply(zipped_begin<std::remove_reference_t<Iterables>...>, t);
+	}
+	iterator end() {
+		return std::apply(zipped_end<std::remove_reference_t<Iterables>...>, t);
+	}
 
-	std::enable_if_t<!is_infinite<zipped_range>::value, size_t>
-	size() const { return std::apply(shortest_iterable<Iterables...>, t); }
+	std::enable_if_t<!is_infinite<zipped_range>::value, size_t> size() const {
+		return std::apply(shortest_iterable<Iterables...>, t);
+	}
 private:
 	std::tuple<Iterables...> t;
 };

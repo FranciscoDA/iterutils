@@ -78,10 +78,10 @@ operator-(const alternated_iterator<Tag, Iterators...>& it, typename alternated_
 template<typename ...Iterators>
 class alternated_iterator<std::input_iterator_tag, Iterators...> {
 public:
-	using value_type =        std::common_type_t<typename std::iterator_traits<Iterators>::value_type...>;
-	using reference =         std::add_lvalue_reference_t<value_type>;
-	using pointer =           std::add_pointer_t<value_type>;
-	using difference_type =   std::common_type_t<typename std::iterator_traits<Iterators>::difference_type...>;
+	using value_type        = std::common_type_t<typename std::iterator_traits<Iterators>::value_type...>;
+	using reference         = std::add_lvalue_reference_t<value_type>;
+	using pointer           = std::add_pointer_t<value_type>;
+	using difference_type   = std::common_type_t<typename std::iterator_traits<Iterators>::difference_type...>;
 	using iterator_category = std::input_iterator_tag;
 
 	alternated_iterator(Iterators... iterators, std::size_t index=0)
@@ -118,12 +118,13 @@ protected:
 };
 
 template<typename ...Iterators>
-class alternated_iterator<std::forward_iterator_tag, Iterators...> : public alternated_iterator<std::input_iterator_tag, Iterators...> {
+class alternated_iterator<std::forward_iterator_tag, Iterators...>
+: public alternated_iterator<std::input_iterator_tag, Iterators...> {
 public:
-	using value_type =        std::common_type_t<typename std::iterator_traits<Iterators>::value_type...>;
-	using reference =         std::add_lvalue_reference_t<value_type>;
-	using pointer =           std::add_pointer_t<value_type>;
-	using difference_type =   std::common_type_t<typename std::iterator_traits<Iterators>::difference_type...>;
+	using value_type        = std::common_type_t<typename std::iterator_traits<Iterators>::value_type...>;
+	using reference         = std::add_lvalue_reference_t<value_type>;
+	using pointer           = std::add_pointer_t<value_type>;
+	using difference_type   = std::common_type_t<typename std::iterator_traits<Iterators>::difference_type...>;
 	using iterator_category = std::forward_iterator_tag;
 
 	using alternated_iterator<std::input_iterator_tag, Iterators...>::alternated_iterator;
@@ -136,8 +137,10 @@ public:
 
 protected:
 };
+
 template<typename ...Iterators>
-class alternated_iterator<std::bidirectional_iterator_tag, Iterators...> : public alternated_iterator<std::forward_iterator_tag, Iterators...> {
+class alternated_iterator<std::bidirectional_iterator_tag, Iterators...>
+: public alternated_iterator<std::forward_iterator_tag, Iterators...> {
 public:
 	using value_type        = std::common_type_t<typename std::iterator_traits<Iterators>::value_type...>;
 	using reference         = std::add_lvalue_reference_t<value_type>;
@@ -154,13 +157,15 @@ public:
 
 protected:
 };
+
 template<typename ...Iterators>
-class alternated_iterator<std::random_access_iterator_tag, Iterators...> : public alternated_iterator<std::bidirectional_iterator_tag, Iterators...> {
+class alternated_iterator<std::random_access_iterator_tag, Iterators...>
+: public alternated_iterator<std::bidirectional_iterator_tag, Iterators...> {
 public:
-	using value_type      = std::common_type_t<typename std::iterator_traits<Iterators>::value_type...>;
-	using reference       = std::add_lvalue_reference_t<value_type>;
-	using pointer         = std::add_pointer_t<value_type>;
-	using difference_type = std::common_type_t<typename std::iterator_traits<Iterators>::difference_type...>;
+	using value_type        = std::common_type_t<typename std::iterator_traits<Iterators>::value_type...>;
+	using reference         = std::add_lvalue_reference_t<value_type>;
+	using pointer           = std::add_pointer_t<value_type>;
+	using difference_type   = std::common_type_t<typename std::iterator_traits<Iterators>::difference_type...>;
 	using iterator_category = std::random_access_iterator_tag;
 
 	using alternated_iterator<std::bidirectional_iterator_tag, Iterators...>::alternated_iterator;
@@ -177,6 +182,7 @@ public:
 	// TODO: add relational operators <, <=, >, >=
 protected:
 };
+
 template<typename ...Iterators>
 alternated_iterator(Iterators...) -> alternated_iterator<
 	std::common_type_t<typename Iterators::iterator_category...>,
@@ -197,10 +203,10 @@ detail::specialize_iterator_from_iterables<alternated_iterator, Iterables...> al
 template<typename ...Iterables>
 class alternated_range {
 public:
-	using iterator = detail::specialize_iterator_from_iterables<alternated_iterator, Iterables...>;
+	using iterator   = detail::specialize_iterator_from_iterables<alternated_iterator, Iterables...>;
 	using value_type = std::common_type_t<typename std::remove_reference_t<Iterables>::value_type...>;
-	using reference =  std::common_type_t<typename std::remove_reference_t<Iterables>::reference...>;
-	using pointer =    std::common_type_t<typename std::remove_reference_t<Iterables>::pointer...>;
+	using reference  = std::common_type_t<typename std::remove_reference_t<Iterables>::reference...>;
+	using pointer    = std::common_type_t<typename std::remove_reference_t<Iterables>::pointer...>;
 
 	alternated_range(Iterables&&... iterables) : t(std::forward<Iterables>(iterables)...) {
 	}
